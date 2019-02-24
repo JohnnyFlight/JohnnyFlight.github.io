@@ -1,4 +1,7 @@
 window.onload = () => {
+  document.getElementById('import_button').onclick = () => import_parameters();
+  document.getElementById('export_button').onclick = () => export_parameters();
+
   //  Load from local storage
   if (localStorage.parameters)
   {
@@ -8,6 +11,27 @@ window.onload = () => {
   setInterval(() => {
     update();
   }, 1);
+}
+
+function import_parameters()
+{
+  //  Pull data from text area
+  var data = document.getElementById('import_text').value;
+
+  try {
+    //  Parse data and try to put it into session
+    JSON.parse(data);
+
+    //  If there are errors, this won't get hit
+    localStorage.parameters = data;
+    loadParametersFromLocalStorage();
+  } catch (e) {
+    alert('Invalid import parameters');
+  }
+}
+
+function export_parameters() {
+  document.getElementById('import_text').value = localStorage.parameters;
 }
 
 function loadParametersFromLocalStorage()
@@ -26,6 +50,15 @@ function loadParametersFromLocalStorage()
 
 function update() {
   //  Check inputs
+  var parameters = getParameters();
+
+  //  Store in local storage
+  localStorage.parameters = JSON.stringify(parameters);
+
+  draw(parameters);
+}
+
+function getParameters() {
   var parameters = {};
   parameters.arms = document.getElementById('arms').value;
   parameters.arm_speed = document.getElementById('arm_speed').value; // Rotations per second
@@ -37,10 +70,7 @@ function update() {
   parameters.point_radius = document.getElementById('point_radius').value;
   parameters.angular_offset = document.getElementById('angular_offset').value;
 
-  //  Store in local storage
-  localStorage.parameters = JSON.stringify(parameters);
-
-  draw(parameters);
+  return parameters;
 }
 
 function draw(parameters) {
