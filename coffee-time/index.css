@@ -1,0 +1,21 @@
+#container {
+  width: 100%;
+}
+
+#john {
+  height: 100px;
+  width: 100px;
+  float: left;
+  background: red;
+}
+
+#coffee {
+  height: 100px;
+  width: 100px;
+  float: right;
+  background: red;
+}
+
+#explanation {
+  clear: both;
+}

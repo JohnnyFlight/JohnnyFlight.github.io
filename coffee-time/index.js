@@ -6,11 +6,15 @@ window.onload = () => {
 function CheckLent()
 {
   var d = new Date();
+  const totalSeconds = 3801600;
 
   if (IsDateInLent(d))
   {
     //  TODO: Put time left in here
-    document.getElementById('answer').innerText = 'No! Not for ' + GetTimeToEndOfLentString(d);
+    var remainingSeconds = GetSecondsToEndOfLent(d);
+    document.getElementById('answer').innerText = 'No! Not for ' + DateToRemainingString(remainingSeconds);
+    var secondsPercentage = (remainingSeconds / totalSeconds) * 100;
+    document.getElementById('coffee').style.marginRight = 'calc(100% - ' + secondsPercentage + '%)';
   }
   else
   {
@@ -18,11 +22,7 @@ function CheckLent()
   }
 }
 
-function GetTimeToEndOfLentString(d) {
-  var timeLeftSeconds = Math.floor((new Date('2019-04-19') - d) / 1000);
-
-  console.log(timeLeftSeconds);
-
+function DateToRemainingString(timeLeftSeconds) {
   var outputSeconds = timeLeftSeconds % 60;
   timeLeftSeconds -= outputSeconds;
 
@@ -40,6 +40,10 @@ function GetTimeToEndOfLentString(d) {
     + outputHours + ' hours '
     + outputMinutes + ' minutes '
     + outputSeconds + ' seconds';
+}
+
+function GetSecondsToEndOfLent(d) {
+  return Math.floor((new Date('2019-04-19') - d) / 1000);
 }
 
 //  Fudge it just for 2019 for now because the rules are more complex than I thought
