@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Pi Collisions</title>
+  </head>
+  <body>
+    <h1>Pi Collisions</h1>
+    <h2>Introduction</h2>
+    <p>I watched a video a while back by <a href="#">3Blue1Brown</a> about a curious way to calculate the digits of pi using the number of collisions between two masses and a wall.</p>
+    <p>I loved it, and thought it was really interesting, but thought little of it until I saw another video by <a href="#">The Coding Train</a> where he attempted to recreate the simulation.</p>
+    <p>It worked, but he had to use increasingly larger time steps to be able to achieve greater accuracy.</p>
+    <p>He left the task of finding a better solution to the viewers, and I have decided to try my hand at one.</p>
+    <p>Instead of moving the blocks a little bit every frame and checking for a collision, I'm instead going to use linear algebra to determine when each collision is going to occur.</p>
+    <p>This reduces the computation significantly as you no longer have to test for thousands of collisions.</p>
+    <p>However, I will still fall foul of the limitations of 32-bit floating point values which will limit my accuracy.</p>
+    <p>I could find a Decimal library of somekind to solve this problem, but I'll probably just rewrite this in Python or C# as they already have Decimal types implemented.</p>
+    <h2>The Maths</h2>
+    <!-- Controls go here -->
+
+    <canvas id="canvas" width="800" height="800"></canvas>
+  </body>
+</html>
