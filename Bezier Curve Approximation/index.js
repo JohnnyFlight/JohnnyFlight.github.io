@@ -79,36 +79,72 @@ function draw(params)
 
   ctx.closePath();
 
-
+  //  Draw lines
   for (var i = 0; i < params.steps; i++)
   {
+    let lineTop = topEdge + height - (height / params.steps) * (i + 1);
+    let lineRight = leftEdge + width - (width / params.steps) * (i);
+
+    ctx.beginPath();
+    var color = `hsl(${(360 / params.steps) * i}, 100%, 80%)`;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+
+    //  Draw points
+    ctx.beginPath();
+    ctx.arc(lineRight, topEdge + height, 5, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath();
+
+    //  Draw lines
+    ctx.beginPath();
+    ctx.moveTo(leftEdge, lineTop);
+    ctx.lineTo(lineRight, topEdge + height);
+    ctx.stroke();
+    ctx.closePath();
+  }
+
+  //  Draw axis points
+  for (var i = 0; i < params.steps; i++)
+  {
+    let lineTop = topEdge + height - (height / params.steps) * (i + 1);
+    let lineRight = leftEdge + width - (width / params.steps) * (i);
+
     ctx.beginPath();
     var color = `hsl(${(360 / params.steps) * i}, 100%, 80%)`;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     //  Draw points
-    ctx.arc(leftEdge, topEdge + height - (height / params.steps) * (i + 1), 5, 0, 2 * Math.PI);
+    ctx.arc(leftEdge, lineTop, 5, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.fill();
-
     ctx.closePath();
 
-    ctx.beginPath();
     //  Draw points
-    ctx.arc(leftEdge + width - (width / params.steps) * (i), topEdge + height, 5, 0, 2 * Math.PI);
+    ctx.beginPath();
+    ctx.arc(lineRight, topEdge + height, 5, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.fill();
-
-    ctx.closePath();
-
-    //  Draw lines
-    ctx.beginPath();
-
-    ctx.moveTo(leftEdge, topEdge + height - (height / params.steps) * (i + 1));
-    ctx.lineTo(leftEdge + width - (width / params.steps) * (i), topEdge + height);
-    ctx.stroke();
-
     ctx.closePath();
   }
 
+  //  Draw bezier points
+  for (var i = 0; i < params.steps; i++)
+  {
+    let lineTop = topEdge + height - (height / params.steps) * (i + 1);
+    let lineRight = leftEdge + width - (width / params.steps) * (i);
+
+    var color = `hsl(${(360 / params.steps) * i}, 100%, 60%)`;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+
+    //  Draw another point a percentage of the way along the line
+    let factor = 1 - (1.0 / (params.steps + 1)) * (i + 1);
+
+    ctx.beginPath();
+    ctx.arc(leftEdge + (lineRight - leftEdge) * factor, topEdge + height - (topEdge + height - lineTop) * (1 - factor), 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
+  }
 }
