@@ -1,8 +1,8 @@
-const height = 600;
-const width = 600;
+const height = 700;
+const width = 700;
 
-const topEdge = 100;
-const leftEdge = 100;
+const topEdge = 50;
+const leftEdge = 50;
 
 window.onload = () =>
 {
@@ -69,6 +69,9 @@ function draw(params)
   //  Draw axes
   ctx.beginPath();
 
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 2;
+
   ctx.moveTo(topEdge, leftEdge);
   ctx.lineTo(leftEdge, topEdge + height);
   ctx.lineTo(leftEdge + width, topEdge + height);
@@ -80,8 +83,9 @@ function draw(params)
   for (var i = 0; i < params.steps; i++)
   {
     ctx.beginPath();
-    ctx.strokeStyle = '1px solid black';
-    ctx.fillStyle = 'red';
+    var color = `hsl(${(360 / params.steps) * i}, 100%, 80%)`;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
     //  Draw points
     ctx.arc(leftEdge, topEdge + height - (height / params.steps) * (i + 1), 5, 0, 2 * Math.PI);
     ctx.stroke();
