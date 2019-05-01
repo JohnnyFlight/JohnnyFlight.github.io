@@ -19,24 +19,88 @@ const CollisionTypes = {
   None: 3
 };
 
-var smallObject = new CollisionObject(10, 1, 0, 10);
-var largeObject = new CollisionObject(100, 100, -10, 100);
+var smallObject = new CollisionObject(100, 1, 0, 10);
+var largeObject = new CollisionObject(600, 10000, -10, 100);
 let collisionCount = 0;
 
 window.onload = () =>
 {
   document.getElementById('nextCollision').onclick = () => {
-    var result = update();
-    draw(getParameters());
+    updateCollisions();
 
-    if (result != CollisionTypes.None)
-    {
-      
-    }
+    let params = getParameters();
+
+    draw(params);
   };
+  document.getElementById('allCollisions').onclick = calculateAllCollisions;
+  document.getElementById('reset').onclick = reset;
+  document.getElementById('digits').onchange = () => {
+    saveParameters();
+    reset();
+  };
+  document.getElementById('digits').onkeypress = (e) =>
+  {
+    if (e.keyCode == 13)
+    {
+      calculateAllCollisions();
+    }
+  }
+
+  loadParametersFromLocalStorage();
+
+  reset();
 
   let params = getParameters();
   draw(params);
+}
+
+function calculateAllCollisions()
+{
+  reset();
+  var result = updateCollisions();
+  var time = new Date();
+
+  while (result != CollisionTypes.None)
+  {
+    result = updateCollisions();
+  }
+
+  alert(`Time: ${new Date() - time.getTime()}`);
+  draw(getParameters());
+}
+
+function reset()
+{
+  smallObject = new CollisionObject(100, 1, 0, 10);
+  let digits = parseInt(document.getElementById('digits').value);
+  largeObject = new CollisionObject(600, Math.pow(100, digits - 1), -10, 100);
+
+  collisionCount = 0;
+
+  draw(getParameters());
+  document.getElementById('results').innerText = '';
+}
+
+function updateCollisions()
+{
+  let result = update();
+  if (result != CollisionTypes.None)
+  {
+    //addResult(params);
+    document.getElementById('collisionCount').innerText = collisionCount;
+  }
+
+  return result;
+}
+
+function addResult(params)
+{
+  let results = document.getElementById('results');
+
+  let item = document.createElement('li');
+  item.innerText = `${collisionCount} collision(s) so far.`;
+
+  results.appendChild(item);
 }
 
 function update()
@@ -59,20 +123,21 @@ function update()
   switch (collision)
   {
     case CollisionTypes.Wall:
-      console.log('Wall Collision');
+      //console.log('Wall Collision');
       doWallCollision();
       collisionCount++;
       break;
     case CollisionTypes.Blocks:
-      console.log('Block Collision');
+      //console.log('Block Collision');
       doBlockCollision();
       collisionCount++;
       break;
     default:
       console.log('No Collision');
+
   }
 
-  console.log(collisionCount);
+  //console.log(collisionCount);
 
   return collision;
 }
@@ -80,7 +145,7 @@ function update()
 function doWallCollision()
 {
   //  Calculate time taken for collision to occur to move other object
-  let t = smallObject.x / smallObject.velocity;
+  let t = Math.abs(smallObject.x / smallObject.velocity);
 
   //  Perfectly elastic collision so just reverse the velocity and set to wall position
   smallObject.x = 0;
@@ -92,7 +157,7 @@ function doWallCollision()
 function doBlockCollision()
 {
   //  Get time to collision
-  let t = (largeObject.x - smallObject.x - smallObject.width) / (smallObject.velocity - largeObject.velocity);
+  let t = Math.abs((largeObject.x - smallObject.x - smallObject.width) / (smallObject.velocity - largeObject.velocity));
 
   //  Update block positions
   smallObject.move(t);
@@ -118,13 +183,19 @@ function getParameters()
   //  Yes, I know I've defined these objects in the global scope already
   params.smallObject = smallObject;
   params.largeObject = largeObject;
+  params.digits = document.getElementById('digits').value;
 
   return params;
 }
 
+function saveParameters()
+{
+    localStorage.parameters = JSON.stringify(getParameters());
+}
+
 function draw(params)
 {
-  console.log(params);
+  //console.log(params);
 
   let ctx = document.getElementById('canvas').getContext('2d');
   ctx.fillStyle = 'black';
