@@ -7,6 +7,9 @@ window.onload = () =>
 initialParticleCount = 100;
 wallRestitution = 0.5;
 
+frameCountLimit = 60;
+frameTimes = [];
+
 class Particle
 {
   // Repulsion is how strongly it resists being inside other particles
@@ -244,10 +247,25 @@ function update(deltaTime)
   state.particles = particles;
   state.lines = lines;
 
+  // Update framerate
+  frameTimes.push(deltaTime);
+  if (frameTimes.length > frameCountLimit)
+  {
+    frameTimes = frameTimes.filter((x, y) => y >= frameTimes.length - frameCountLimit);
+  }
+
+  let frameTime = 0;
+  for (f of frameTimes)
+  {
+    frameTime += f;
+  }
+
+  frameTime /= frameTimes.length;
+
   // Update UI
   // TODO: Average FPS over a number of frames
   document.getElementById('particleCount').innerText = particles.length;
-  document.getElementById('frameRate').innerText = (1.0 / deltaTime).toFixed(2);
+  document.getElementById('frameRate').innerText = (1.0 / frameTime).toFixed(2);
 
   return state;
 }
