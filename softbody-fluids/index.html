@@ -15,7 +15,13 @@
   </head>
   <body>
     <h1>Soft-body Fluid Simulation</h1>
-    <p>Fluid simulation is hard. There's a set of equation called the Navier-Stokes equations that you have to solve to be able to accurately model fluid dynamics, which hasn't been done yet, so the best we have is various approximations.</p>
+    <p>Fluid simulation is hard. So instead of doing that I'm fudging it by using 'soft' particles that bounce off each other gently.</p>
+    <h2>Controls</h2>
+    <ul>
+      <li>Click to add a single particle</li>
+      <li>Shift-click to add 10 particles</li>
+      <li>Ctrl-click to remove particles</li>
+    </ul>
     <p>Particles: <span id="particleCount"></span> Framerate: <span id="frameRate"></span> </p>
 
     <!--
