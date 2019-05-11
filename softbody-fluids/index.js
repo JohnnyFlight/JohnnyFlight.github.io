@@ -4,11 +4,14 @@ window.onload = () =>
   run();
 }
 
+initialParticleCount = 100;
+wallRestitution = 0.5;
+
 class Particle
 {
   // Repulsion is how strongly it resists being inside other particles
-  constructor(position = new Vector2(0, 0), radius = 15, mass = 1, repulsion = 10000,
-    velocity = new Vector2(0, 0))
+  constructor(position = new Vector2(0, 0), radius = 15, mass = 1, repulsion = 40000,
+    velocity = new Vector2(0, 0), restitution = 0.05)
   {
     this.radius = radius;
     this.mass = mass;
@@ -16,6 +19,9 @@ class Particle
 
     this.position = position;
     this.velocity = velocity;
+    this.restitution = restitution;
+
+    this.linearDamping = 1;
 
     this.instantaneousForce = new Vector2(0, 0);
   }
@@ -23,6 +29,10 @@ class Particle
   UpdatePosition(deltaTime)
   {
     this.velocity = this.velocity.add(this.instantaneousForce.mult(deltaTime / this.mass));
+
+    // Apply damping
+    this.velocity = this.velocity.mult(1.0 / (1.0 + this.linearDamping * deltaTime));
+
     this.position = this.position.add(this.velocity.mult(deltaTime));
 
     this.instantaneousForce = new Vector2(0, 0);
@@ -113,21 +123,42 @@ function init()
 
   document.getElementById('canvas').onclick = canvasClick;
 
-  for (let i = 0; i < 200; i++)
+  for (let i = 0; i < initialParticleCount; i++)
   {
     particles.push(new Particle(new Vector2(Math.random() * 600 + 100, Math.random() * 200 + 100)));
   }
 
-  lines.push(new Line(new Vector2(0, 100), new Vector2(0, 400)));
-  lines.push(new Line(new Vector2(0, 400), new Vector2(500, 600)));
-  lines.push(new Line(new Vector2(300, 600), new Vector2(800, 400)));
-  lines.push(new Line(new Vector2(800, 400), new Vector2(800, 100)));
+  lines.push(new Line(new Vector2(0, 0), new Vector2(0, 400)));
+  lines.push(new Line(new Vector2(0, 400), new Vector2(400, 600)));
+  lines.push(new Line(new Vector2(0, 500), new Vector2(800, 500)));
+  lines.push(new Line(new Vector2(400, 600), new Vector2(800, 400)));
+  lines.push(new Line(new Vector2(800, 400), new Vector2(800, 000)));
+
+  lines.push(new Line(new Vector2(700, 0), new Vector2(600, 100)));
+  lines.push(new Line(new Vector2(600, 100), new Vector2(500, 0)));
+  lines.push(new Line(new Vector2(500, 0), new Vector2(700, 0)));
   //lines.push(new Line(new Vector2(400, 400), new Vector2(800, 400)));
 }
 
 function canvasClick(e)
 {
-  particles.push(new Particle(new Vector2(e.offsetX - 5 + Math.random() * 5, e.offsetY - 5 + Math.random() * 5)));
+  let range = 50;
+
+  if (e.ctrlKey)
+  {
+    particles = particles.filter((x) => (x.position.subtract(new Vector2(e.offsetX, e.offsetY)).length() > x.radius));
+  }
+  else if (e.shiftKey)
+  {
+    for (let i = 0; i < 10; i++)
+    {
+      particles.push(new Particle(new Vector2(e.offsetX - range + Math.random() * (2 * range), e.offsetY - range + Math.random() * (2 * range))));
+    }
+  }
+  else
+  {
+    particles.push(new Particle(new Vector2(e.offsetX, e.offsetY)));
+  }
 }
 
 function run()
@@ -147,6 +178,14 @@ function run()
 function update(deltaTime)
 {
   let state = {};
+
+  // Move lines
+  lines[5].start.y += 100 * deltaTime;
+  lines[5].end.y += 100 * deltaTime;
+  lines[6].start.y += 100 * deltaTime;
+  lines[6].end.y += 100 * deltaTime;
+  lines[7].start.y += 100 * deltaTime;
+  lines[7].end.y += 100 * deltaTime;
 
   // Update particle position
   for (particle of particles)
@@ -172,8 +211,9 @@ function update(deltaTime)
       {
         let depth = particles[i].IntersectParticleDepth(particles[j]);
         let dir = particles[i].position.subtract(particles[j].position).normal();
-        collisions.push(new Collision(i, depth, dir, false, 0, 0.5));
-        collisions.push(new Collision(j, depth, dir.mult(-1), false, 0, 0.5));
+
+        collisions.push(new Collision(i, depth, dir, false, 0, particles[j].restitution));
+        collisions.push(new Collision(j, depth, dir.mult(-1), false, 0, particles[i].restitution));
 
         //console.log("Collision", i, j, depth, dir);
       }
@@ -188,7 +228,7 @@ function update(deltaTime)
         let dist = particles[i].IntersectLineDistance(line);
         let dir = line.normal();
 
-        collisions.push(new Collision(i, depth, dir.mult(-1), true, dist, 0.3));
+        collisions.push(new Collision(i, depth, dir.mult(-1), true, dist, wallRestitution));
         //console.log("Wall bounce", i, depth, dir);
       }
     }
@@ -203,6 +243,11 @@ function update(deltaTime)
   // Send to draw
   state.particles = particles;
   state.lines = lines;
+
+  // Update UI
+  // TODO: Average FPS over a number of frames
+  document.getElementById('particleCount').innerText = particles.length;
+  document.getElementById('frameRate').innerText = (1.0 / deltaTime).toFixed(2);
 
   return state;
 }
