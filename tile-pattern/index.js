@@ -7,6 +7,7 @@ window.onload = () =>
 {
   let buffer = 1;
   let rad = 30;
+  let startOffset = 17.5 - 2 * (rad + buffer);
 
   let state = {};
 
@@ -22,11 +23,11 @@ window.onload = () =>
   }
   else
   {
-    for (let x = 0; x < 16; x++)
+    for (let x = 0; x < 17; x++)
     {
       for (let y = 0; y < 30; y++)
       {
-        tiles.push(new Tile(((rad + buffer) * 2) * x + ((y % 2) ? rad + buffer : 0), (rad + buffer) * y, rad, (Math.random() < 0.5 ? colour1 : colour2)));
+        tiles.push(new Tile(((rad + buffer) * 2) * x + startOffset + ((y % 2) ? rad + buffer : 0), (rad + buffer) * y, rad, (Math.random() < 0.5 ? colour1 : colour2)));
       }
     }
   }
