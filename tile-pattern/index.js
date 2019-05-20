@@ -138,7 +138,7 @@ function draw(data)
 
   // Draw border line
   ctx.fillStyle = 'black';
-  ctx.fillRect(897.5 / 2, 0, 5, 800);
+  ctx.fillRect(897.5 / 2, 0, 5, 900);
 
   // Draw rough shower area
   ctx.fillRect(900 / 4 - 50, 200, 100, 150);
