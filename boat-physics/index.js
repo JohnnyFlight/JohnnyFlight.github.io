@@ -139,7 +139,7 @@ function update(deltaTime)
     let force = n.multiply(f);
     force.x = 0;
     state.boat.physics.applyForce(mid, force);
-    state.forces.push(new Line(mid, mid.add(n.multiply(f / 100000))));
+    state.forces.push(new Line(mid, mid.add(n.multiply(f / 300000))));
   }
 
   return state;
