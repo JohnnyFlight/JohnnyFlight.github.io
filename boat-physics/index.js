@@ -54,8 +54,8 @@ function init()
 {
   frameTime = getTicks();
 
-  let width = 300;
-  let height = 200;
+  let width = 200;
+  let height = 100;
 
   let top = points(new Vector2(-width, -height), new Vector2(width, -height), 50);
   let right = points(new Vector2(width, -height), new Vector2(width/ 2, 0), 50);
@@ -68,9 +68,9 @@ function init()
       [top, right, bottom, left].flatMap((x) => x)));
 
   globalState.boat.physics.position = new Vector2(400, 250);
-  globalState.boat.physics.rotation = 0;
+  globalState.boat.physics.rotation = 0.1;
   globalState.boat.physics.mass = 11000000;
-  globalState.boat.physics.gravity = 9.81;
+  globalState.boat.physics.gravity = 98.1;
   globalState.boat.physics.inertia = 2000000000000;
 
   globalState.boat.init();
@@ -121,19 +121,25 @@ function update(deltaTime)
   // Apply hydrostatic forces based on submerged lines
   for (let sub of state.submergedLines)
   {
-    let mid = sub.midpoint();
     let n = sub.normal();
 
     let z0 = Math.min(sub.start.y, sub.end.y);
     let h = Math.max(sub.start.y, sub.end.y) - z0;
 
     let tc = (4 * z0 + 3 * h) / (6 * z0 + 4 * h);
+
+    let mid = sub.intersects(new Line(new Vector2(Math.min(sub.start.x, sub.end.x), z0 + h * tc), new Vector2(Math.max(sub.start.x, sub.end.x), z0 + h * tc)));
+    if (!mid)
+    {
+      mid = sub.midpoint();
+    }
     let hCentre = Math.abs(waterLine.distance(mid));
 
     let f = rho * g * hCentre * sub.length();
     let force = n.multiply(f);
+    force.x = 0;
     state.boat.physics.applyForce(mid, force);
-    state.forces.push(new Line(mid, mid.add(n.multiply(f / 10000))));
+    state.forces.push(new Line(mid, mid.add(n.multiply(f / 100000))));
   }
 
   return state;
