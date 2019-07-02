@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Minimap Demo</title>
+    <script src="../lib/lib.js" type="text/javascript">
+    </script>
+    <script src="../lib/maths.js" type="text/javascript">
+    </script>
+    <script src="index.js" type="text/javascript">
+    </script>
+
+    <link rel="stylesheet" href="../css/global.css">
+    <style media="screen">
+      canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Minimap Demo</h1>
+    <p>TODO: Turn this into a map editor with export/import options</p>
+    <h2>Clicked tile info</h2>
+    <ul>
+      <li>Name: <span id="cellName"></span> </li>
+      <li>Position: <span id="cellPos"></span> </li>
+      <li>Tags: <span id="cellTags"></span> </li>
+    </ul>
+    <canvas id="canvas" width="800" height="600"></canvas>
+  </body>
+</html>

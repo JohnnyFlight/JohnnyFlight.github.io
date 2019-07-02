@@ -57,10 +57,15 @@ function init()
   let width = 200;
   let height = 100;
 
-  let top = points(new Vector2(-width, -height), new Vector2(width, -height), 50);
-  let right = points(new Vector2(width, -height), new Vector2(width/ 2, 0), 50);
-  let bottom = points(new Vector2(width/ 2, 0), new Vector2(-width / 2, 0), 50);
-  let left = points(new Vector2(-width / 2, 0), new Vector2(-width, -height), 50);
+  globalState.boatWidth = width;
+  globalState.boatHeight = height;
+
+  let chainLength = 100;
+
+  let top = points(new Vector2(-width, -height), new Vector2(width, -height), chainLength);
+  let right = points(new Vector2(width, -height), new Vector2(width/ 2, 0), chainLength);
+  let bottom = points(new Vector2(width/ 2, 0), new Vector2(-width / 2, 0), chainLength);
+  let left = points(new Vector2(-width / 2, 0), new Vector2(-width, -height), chainLength);
 
   globalState.boat = new Boat(
     new PhysicsObject(),
@@ -68,10 +73,10 @@ function init()
       [top, right, bottom, left].flatMap((x) => x)));
 
   globalState.boat.physics.position = new Vector2(400, 250);
-  globalState.boat.physics.rotation = 0.1;
+  globalState.boat.physics.rotation = Math.PI / 4;
   globalState.boat.physics.mass = 11000000;
   globalState.boat.physics.gravity = 98.1;
-  globalState.boat.physics.inertia = 2000000000000;
+  globalState.boat.physics.inertia = 20000000000;
 
   globalState.boat.init();
 
@@ -137,10 +142,21 @@ function update(deltaTime)
 
     let f = rho * g * hCentre * sub.length();
     let force = n.multiply(f);
-    force.x = 0;
+    //force.x = 0;
     state.boat.physics.applyForce(mid, force);
     state.forces.push(new Line(mid, mid.add(n.multiply(f / 300000))));
   }
+
+  // Calculate viscous water resistance
+  // Get min and max x-position of intersection points to determine length of water travel
+  // Fudge it as average length of boat for now
+  let submergedLength = state.boatWidth - state.boatHeight;
+  let viscosity = 1; // TODO
+  // Reynold's number
+  // Note: Think this should be tangent to waterline?
+  let rn = (state.boat.physics.velocity.length() * submergedLength) / viscosity;
+
+
 
   return state;
 }
