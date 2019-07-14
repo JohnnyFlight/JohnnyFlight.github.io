@@ -11,10 +11,24 @@ const EditorState_MoveCell = 'moveCell';
 let editorState = EditorState_Default;
 
 window.onload = () => {
-  map = new Map();
+  if (localStorage.map)
+  {
+    map = Object.assign(new Map(), JSON.parse(localStorage.map));
+
+    for (let cell in map.cells)
+    {
+      map.cells[cell] = Object.assign(new MapCell(), map.cells[cell]);
+    }
+  }
+  else {
+    map = new Map();
+
+    map.cells.push(new MapCell(new Vector2(0, 0), 'Start', ['start']));
+  }
+
+  map.customRenderCell = CustomCellRender;
 
   can = document.getElementById('canvas');
-  map.cells.push(new MapCell(new Vector2(0, 0), 'Start', ['start']));
 
   can.onclick = mapClick;
 
@@ -22,6 +36,10 @@ window.onload = () => {
 
   document.getElementById('placeCell').onclick = () =>
     ChangeState(EditorState_PlaceCell);
+
+  document.getElementById('cellName').onchange = Autosave;
+  document.getElementById('cellPosX').onchange = Autosave;
+  document.getElementById('cellPosY').onchange = Autosave;
 
   document.getElementById('linkCell').onclick = () =>
   {
@@ -39,6 +57,40 @@ window.onload = () => {
 
   document.getElementById('saveCell').onclick = SaveCellDetails;
 };
+
+function CustomCellRender(ctx, cell)
+{
+  if (map.getCellIndexByName(cell.name) == selectedCellIdx)
+  {
+    console.log(map.getCellIndexByName(cell.name), selectedCellIdx)
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 4;
+  }
+  else
+  {
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+  }
+
+  // If cell is visible and in map size or connected to cell in map size
+  if (!cell.visible)
+  {
+    ctx.setLineDash([10, 5]);
+  };
+
+  ctx.save();
+  {
+    ctx.translate(-cell.size.x / 2, -cell.size.y / 2);
+
+    ctx.beginPath();
+    {
+      ctx.rect(cell.position.x, cell.position.y, cell.size.x, cell.size.y);
+      ctx.stroke();
+    }
+    ctx.closePath();
+  }
+  ctx.restore();
+}
 
 function ExportTweego()
 {
@@ -66,6 +118,12 @@ ifid:Map Export\n\n`;
   document.getElementById('export').innerHTML = output;
 }
 
+function Autosave()
+{
+  SaveCellDetails();
+  SaveToLocalStorage();
+}
+
 function SaveCellDetails()
 {
   if (selectedCellIdx < 0) return;
@@ -76,6 +134,13 @@ function SaveCellDetails()
   cell.position.y = parseFloat(document.getElementById('cellPosY').value);
 
   RenderMap();
+
+  SaveToLocalStorage();
+}
+
+function SaveToLocalStorage()
+{
+  localStorage.map = JSON.stringify(map);
 }
 
 function mapClick(evt)
@@ -115,6 +180,8 @@ function mapClick(evt)
       ChangeState(EditorState_Default);
       break;
   }
+
+  SaveToLocalStorage();
 
   RenderMap();
 }

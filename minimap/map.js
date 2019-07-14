@@ -46,7 +46,10 @@ class MapCell
 
   isPointInCell(x, y)
   {
-    let halfSize = this.size.divide(2);
+    let halfSize = new Vector2(this.size.x, this.size.y);
+    halfSize.x /= 2;
+    halfSize.y /= 2;
+
     // NOTE: Point in map space
     if (x < this.position.x - halfSize.x) return false;
     if (x > this.position.x + halfSize.x) return false;
@@ -80,6 +83,17 @@ class Map
     for (let cell of this.cells)
     {
       if (cell.name == name)
+        return cell;
+    }
+
+    return false;
+  }
+
+  getCellIndexByName(name)
+  {
+    for (let cell in this.cells)
+    {
+      if (this.cells[cell].name == name)
         return cell;
     }
 
@@ -292,7 +306,11 @@ class Map
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 2;
 
-    let midPoint = toCell.position.subtract(fromCell.position).divide(2).add(fromCell.position);
+    //let midPoint = toCell.position.subtract(fromCell.position).divide(2).add(fromCell.position);
+
+    let midPoint = new Vector2((toCell.position.x - fromCell.position.x) / 2 + fromCell.position.x, (toCell.position.y - fromCell.position.y) / 2 + fromCell.position.y);
+
+    console.log(midPoint);
 
     ctx.beginPath();
     {
