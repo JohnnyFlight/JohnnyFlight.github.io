@@ -25,25 +25,32 @@
     <ul>
       <li>Remove cells</li>
       <li>Remove links</li>
-      <li>Modify tags</li>
-      <li>Modify story title</li>
-      <li>Snap to grid</li>
-      <li>Cell size</li>
-      <li>Export validation (Make sure there's a passage called 'start')</li>
+      <li>Render grid</li>
       <li>Save to file</li>
-      <li>Hidden cells</li>
       <li>Pathing</li>
       <li>Drag world</li>
       <li>Event model in export</li>
-      <li>Map uncovering in export</li>
       <li>Hotkeys</li>
-      <li>Show state</li>
     </ul>
+    <!--
+      story settings
+    -->
+    <h2>Story Settings</h2>
+    <ul>
+      <li>Title: <input id="storyTitle" type="text" name="" value=""></li>
+      <li>Default Cell Size: x: <input type="number" id="defaultCellSizeX" value="50" /> y:<input type="number" id="defaultCellSizeY" value="50" /></span> </li>
+    </ul>
+    <!--
+      selected cell
+    -->
     <h2>Selected Cell</h2>
     <ul>
       <li>Name: <input id="cellName" /></span> </li>
       <li>Position: x: <input type="number" id="cellPosX" /> y:<input type="number" id="cellPosY" /></span> </li>
-      <li>Tags: <span id="cellTags"></span> </li>
+      <li>Size: x: <input type="number" id="cellSizeX" /> y:<input type="number" id="cellSizeY" /></span> </li>
+      <li>Visible: <input id="cellVisible" type="checkbox" name="" value=""></li>
+      <li>Hidden: <input id="cellHidden" type="checkbox" name="" value=""></li>
+      <li>Tags: <input id="cellTags" type="text" /> </li>
       <li>
         <button type="button" name="button" id="saveCell">Save</button>
         <button type="button" name="button" id="linkCell">Link</button>
@@ -51,22 +58,53 @@
         <button type="button" name="button" id="moveCell">Move</button>
       </li>
     </ul>
+    <h3>Flavour Text</h3>
+    <textarea id="cellFlavour" name="cellFlavour" rows="8" cols="80"></textarea>
+    <!--
+      actions
+    -->
     <h2>Actions</h2>
+    <ul>
+      <li>State: <span id="editorState">Default</span> </li>
+    </ul>
     <button id="placeCell" type="button" name="placeCell">Add Cell</button>
-    <br>Snap to grid (todo): <input type="checkbox" name="snapGrid">
-    Grid size: x:<input type="number" name="gridX" value="50"> y:<input type="number" name="gridY" value="50">
-    <br>Cell size: x:<input type="number" name="cellX" value="50"> y:<input type="number" name="cellY" value="50">
+    <br>Snap to grid: <input type="checkbox" id="snapGrid">
+    Grid size: x:<input type="number" id="gridX" value="50"> y:<input type="number" id="gridY" value="50">
+    <br>Cell size: x:<input type="number" id="cellX" value="50"> y:<input type="number" id="cellY" value="50">
+    <!--
+      canvas
+    -->
     <canvas id="canvas" width="800" height="600"></canvas>
-    <h1>Export</h1>
-    <button id="exportTweego" type="button" name="exportTweego">Export Tweego</button><br>
-    Include Events <input type="checkbox" name="includeEvents"><br>
+    <!--
+      export
+    -->
+    <h2>Export</h2>
+    <ul>
+      <li>Include Events <input type="checkbox" id="includeEvents"></li>
+      <li>Include Map <input type="checkbox" id="includeMap"></li>
+      <li>Include Map Reveal <input type="checkbox" id="includeMapReveal"></li>
+      <li><button id="exportTweego" type="button" name="exportTweego">Export Tweego</button></li>
+  </ul>
     <textarea id="export" name="export" rows="8" cols="80"></textarea>
     <h2>Done</h2>
     <ul>
+      <li>14-07-2019</li>
       <li>Autosave - Saves with every changed textbox or mouse click</li>
       <li>Save to local storage</li>
       <li>Not visible cells</li>
       <li>Show selected cell</li>
+      <li>16-07-2019</li>
+      <li>Modify story title</li>
+      <li>Show state</li>
+      <li>Cell size</li>
+      <li>Default cell size</li>
+      <li>Modify tags</li>
+      <li>Hidden cells</li>
+      <li>17-07-2019</li>
+      <li>Cell flavour text</li>
+      <li>Export validation (Make sure there's a passage called 'start')</li>
+      <li>Map uncovering in export</li>
+      <li>Snap to grid</li>
     </ul>
   </body>
 </html>

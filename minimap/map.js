@@ -97,7 +97,7 @@ class Map
         return cell;
     }
 
-    return false;
+    return -1;
   }
 
   getCellAtPoint(x, y)
@@ -182,6 +182,18 @@ class Map
       if (cell.hasTag(tag))
       {
         cell.visible = visibility;
+      }
+    }
+  }
+
+  setCellVisibilityByName(name, visibility)
+  {
+    for (var cell of this.cells)
+    {
+      if (cell.name == name)
+      {
+        cell.visible = visibility;
+        return;
       }
     }
   }
