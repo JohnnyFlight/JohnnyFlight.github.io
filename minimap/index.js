@@ -13,18 +13,16 @@ let editorState = EditorState_Default;
 window.onload = () => {
   if (localStorage.map)
   {
-    map = Object.assign(new Map(), JSON.parse(localStorage.map));
-
-    for (let cell in map.cells)
-    {
-      map.cells[cell] = Object.assign(new MapCell(), map.cells[cell]);
-    }
+    LoadFromLocalStorage();
   }
   else {
     map = new Map();
 
     map.cells.push(new MapCell(new Vector2(0, 0), 'Start', ['start']));
+    document.getElementById('storyTitle').value = 'New Story';
   }
+
+  SetupEventListeners();
 
   map.customRenderCell = CustomCellRender;
 
@@ -33,13 +31,34 @@ window.onload = () => {
   can.onclick = mapClick;
 
   RenderMap();
+};
 
+function SetupEventListeners()
+{
   document.getElementById('placeCell').onclick = () =>
     ChangeState(EditorState_PlaceCell);
 
+  // Cell properties
   document.getElementById('cellName').onchange = Autosave;
+
   document.getElementById('cellPosX').onchange = Autosave;
   document.getElementById('cellPosY').onchange = Autosave;
+
+  document.getElementById('cellSizeX').onchange = Autosave;
+  document.getElementById('cellSizeY').onchange = Autosave;
+
+  document.getElementById('cellFlavour').onchange = Autosave;
+
+  // Story properties
+  document.getElementById('storyTitle').onchange = Autosave;
+
+  document.getElementById('defaultCellSizeX').onchange = Autosave;
+  document.getElementById('defaultCellSizeY').onchange = Autosave;
+
+  document.getElementById('cellVisible').onchange = Autosave;
+  document.getElementById('cellHidden').onchange = Autosave;
+
+  document.getElementById('cellTags').onchange = Autosave;
 
   document.getElementById('linkCell').onclick = () =>
   {
@@ -56,7 +75,7 @@ window.onload = () => {
   document.getElementById('exportTweego').onclick = ExportTweego
 
   document.getElementById('saveCell').onclick = SaveCellDetails;
-};
+}
 
 function CustomCellRender(ctx, cell)
 {
@@ -94,16 +113,38 @@ function CustomCellRender(ctx, cell)
 
 function ExportTweego()
 {
+  if (map.getCellIndexByName('Start') == -1)
+  {
+    alert('No Start passage found (must be case sensitive)');
+    return;
+  }
+
+  let includeMap = document.getElementById('includeMap').checked;
+  let includeEvents = document.getElementById('includeEvents').checked;
+  let includeMapReveal = document.getElementById('includeMapReveal').checked;
+
   // Need this boilerplate so Tweego can compile from export
   let output = `:: StoryTitle
-Map Export
+${document.getElementById('storyTitle').value}
 
 :: StorySettings
-ifid:Map Export\n\n`;
+ifid:Map Export
+
+:: PassageDone
+${includeMap ? '<<script>>State.variables.RenderMap();<</script>>' : ''}
+
+:: StoryPassage
+${includeMap ? '<canvas id="canvas" width="200" height="200"></canvas>' : ''}\n\n`;
 
   for (let cell of map.cells)
   {
-    output += `:: ${cell.name} [ ${cell.tags.toString()} ]\n\n`;
+    output += `:: ${cell.name} [ ${cell.tags.toString()} ]
+${includeMap ? '<<set $mapName to "' + cell.name + '">>' : ''}
+${includeMapReveal ? '<<print $map.setCellVisibilityByName("' + cell.name + '")>>' : ''}
+
+${includeEvents ? '<<print $GetEventsForScene("' + cell.name + '")>>' : ''}
+
+${cell.flavourText || ''}\n\n`;
 
     for (let linkIdx of cell.links)
     {
@@ -121,7 +162,6 @@ ifid:Map Export\n\n`;
 function Autosave()
 {
   SaveCellDetails();
-  SaveToLocalStorage();
 }
 
 function SaveCellDetails()
@@ -130,8 +170,19 @@ function SaveCellDetails()
 
   let cell = map.cells[selectedCellIdx];
   cell.name = document.getElementById('cellName').value;
+
   cell.position.x = parseFloat(document.getElementById('cellPosX').value);
   cell.position.y = parseFloat(document.getElementById('cellPosY').value);
+
+  cell.size.x = parseFloat(document.getElementById('cellSizeX').value);
+  cell.size.y = parseFloat(document.getElementById('cellSizeY').value);
+
+  cell.visible = document.getElementById('cellVisible').checked;
+  cell.hidden = document.getElementById('cellHidden').checked;
+
+  cell.flavourText = document.getElementById('cellFlavour').value;
+
+  cell.tags = document.getElementById('cellTags').value.split(',').map((val) => val.trim());
 
   RenderMap();
 
@@ -140,7 +191,32 @@ function SaveCellDetails()
 
 function SaveToLocalStorage()
 {
-  localStorage.map = JSON.stringify(map);
+  localStorage.map = JSON.stringify({
+    map: map,
+    title: document.getElementById('storyTitle').value,
+    defaults: {
+      cellSize: {
+        x: document.getElementById('defaultCellSizeX').value,
+        y: document.getElementById('defaultCellSizeY').value
+      }
+    }
+  });
+}
+
+function LoadFromLocalStorage()
+{
+  let load = JSON.parse(localStorage.map);
+  map = Object.assign(new Map(), load.map);
+
+  document.getElementById('storyTitle').value = load.title;
+
+  document.getElementById('defaultCellSizeX').value = load.defaults.cellSize.x;
+  document.getElementById('defaultCellSizeY').value = load.defaults.cellSize.y;
+
+  for (let cell in map.cells)
+  {
+    map.cells[cell] = Object.assign(new MapCell(), map.cells[cell]);
+  }
 }
 
 function mapClick(evt)
@@ -175,7 +251,15 @@ function mapClick(evt)
     case EditorState_MoveCell:
       if (selectedCellIdx < 0) break;
 
-      map.cells[selectedCellIdx].position = pos;
+      if (document.getElementById('snapGrid').checked)
+      {
+        map.cells[selectedCellIdx].position = SnapToGrid(pos);
+      }
+      else
+      {
+        map.cells[selectedCellIdx].position = pos;
+      }
+      printCell(map.cells[selectedCellIdx]);
 
       ChangeState(EditorState_Default);
       break;
@@ -186,14 +270,35 @@ function mapClick(evt)
   RenderMap();
 }
 
+function SnapToGrid(pos)
+{
+  let gridX = document.getElementById('gridX').value;
+  let gridY = document.getElementById('gridY').value;
+
+  pos.x = Math.floor(pos.x / gridX) * gridX;
+  pos.y = Math.floor(pos.y / gridY) * gridY;
+
+  return pos;
+}
+
 function ChangeState(state)
 {
   editorState = state;
+  document.getElementById('editorState').innerText = state;
 }
 
 function PlaceCell(pos)
 {
-  map.cells.push(new MapCell(pos, 'Cell ' + (map.cells.length + 1)));
+  let cell = new MapCell(pos, 'Cell ' + (map.cells.length + 1));
+  cell.size.x = document.getElementById('defaultCellSizeX').value;
+  cell.size.y = document.getElementById('defaultCellSizeY').value;
+
+  if (document.getElementById('snapGrid').checked)
+  {
+    cell.position = SnapToGrid(cell.position);
+  }
+
+  map.cells.push(cell);
 }
 
 function RenderMap()
@@ -205,7 +310,17 @@ function RenderMap()
 function printCell(cell)
 {
   document.getElementById('cellName').value = cell.name || 'No name';
+
   document.getElementById('cellPosX').value = `${cell.position.x}`
   document.getElementById('cellPosY').value = `${cell.position.y}`;
-  document.getElementById('cellTags').innerText = cell.tags.join(', ') || 'No tags';
+
+  document.getElementById('cellSizeX').value = `${cell.size.x}`
+  document.getElementById('cellSizeY').value = `${cell.size.y}`;
+
+  document.getElementById('cellVisible').checked = cell.visible;
+  document.getElementById('cellHidden').checked = cell.hidden;
+
+  document.getElementById('cellFlavour').value = cell.flavourText || '';
+
+  document.getElementById('cellTags').value = cell.tags.join(', ') || '';
 }
