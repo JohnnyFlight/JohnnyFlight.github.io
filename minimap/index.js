@@ -1,12 +1,17 @@
 let map;
 let can;
 let selectedCellIdx = -1;
+let prevPosition = {};
 
 // Define editor states here
 const EditorState_Default = 'default';
 const EditorState_PlaceCell = 'placeCell';
 const EditorState_LinkCell = 'linkCell';
 const EditorState_MoveCell = 'moveCell';
+const EditorState_DeleteCell = 'deleteCell';
+const EditorState_RemoveLinkCell = 'removeLinkCell';
+
+let editorDragging = false;
 
 let editorState = EditorState_Default;
 
@@ -28,15 +33,23 @@ window.onload = () => {
 
   can = document.getElementById('canvas');
 
-  can.onclick = mapClick;
-
   RenderMap();
 };
 
 function SetupEventListeners()
 {
+  // Canvas events
+  document.getElementById('canvas').onclick = MapClick;
+  document.getElementById('canvas').onmousedown = MapMouseDown;
+  document.getElementById('canvas').onmouseup = MapMouseUp;
+  document.getElementById('canvas').onmousemove = MapMouseMove;
+  window.onkeyup = MapKeyPress;
+
+  // Action buttons
   document.getElementById('placeCell').onclick = () =>
     ChangeState(EditorState_PlaceCell);
+  document.getElementById('deleteCell').onclick = () =>
+    ChangeState(EditorState_DeleteCell);
 
   // Cell properties
   document.getElementById('cellName').onchange = Autosave;
@@ -66,6 +79,12 @@ function SetupEventListeners()
     ChangeState(EditorState_LinkCell);
   }
 
+  document.getElementById('removeLinkCell').onclick = () =>
+  {
+    if (selectedCellIdx < 0) return;
+    ChangeState(EditorState_RemoveLinkCell);
+  }
+
   document.getElementById('moveCell').onclick = () =>
   {
     if (selectedCellIdx < 0) return;
@@ -75,21 +94,28 @@ function SetupEventListeners()
   document.getElementById('exportTweego').onclick = ExportTweego
 
   document.getElementById('saveCell').onclick = SaveCellDetails;
+
+  document.getElementById('snapGrid').onchange = RenderMap;
+  document.getElementById('gridX').onchange = RenderMap;
+  document.getElementById('gridY').onchange = RenderMap;
 }
 
 function CustomCellRender(ctx, cell)
 {
   if (map.getCellIndexByName(cell.name) == selectedCellIdx)
   {
-    console.log(map.getCellIndexByName(cell.name), selectedCellIdx)
     ctx.strokeStyle = 'red';
+    ctx.fillStyle = 'black';
     ctx.lineWidth = 4;
   }
   else
   {
     ctx.strokeStyle = 'black';
+    ctx.fillStyle = 'black';
     ctx.lineWidth = 2;
   }
+
+  ctx.font = '20px Arial';
 
   // If cell is visible and in map size or connected to cell in map size
   if (!cell.visible)
@@ -107,6 +133,8 @@ function CustomCellRender(ctx, cell)
       ctx.stroke();
     }
     ctx.closePath();
+
+    ctx.fillText(cell.name, cell.position.x, cell.position.y);
   }
   ctx.restore();
 }
@@ -219,7 +247,7 @@ function LoadFromLocalStorage()
   }
 }
 
-function mapClick(evt)
+function MapClick(evt)
 {
   let pos = new Vector2(evt.offsetX - can.width / 2 + map.centre.x, evt.offsetY - can.height / 2 + map.centre.y);
   let idx = map.getCellIndexAtPoint(pos.x, pos.y);
@@ -263,6 +291,24 @@ function mapClick(evt)
 
       ChangeState(EditorState_Default);
       break;
+    case EditorState_DeleteCell:
+      if (idx == -1) break;
+
+      if (idx == selectedCellIdx)
+      {
+        selectedCellIdx = -1;
+      }
+
+      map.removeCellByIndex(idx);
+      ChangeState(EditorState_Default);
+      break;
+    case EditorState_RemoveLinkCell:
+      if (selectedCellIdx < 0 || selectedCellIdx == idx) break;
+
+      map.cells[selectedCellIdx].removeCellIndex(idx);
+
+      ChangeState(EditorState_Default);
+      break;
   }
 
   SaveToLocalStorage();
@@ -270,13 +316,64 @@ function mapClick(evt)
   RenderMap();
 }
 
+function MapMouseUp(evt)
+{
+  editorDragging = false;
+}
+
+function MapMouseDown(evt)
+{
+  editorDragging = true;
+  prevPosition.x = evt.offsetX;
+  prevPosition.y = evt.offsetY;
+}
+
+function MapMouseMove(evt)
+{
+  if (editorDragging)
+  {
+    map.centre.x -= evt.offsetX - prevPosition.x;
+    map.centre.y -= evt.offsetY - prevPosition.y;
+
+    prevPosition.x = evt.offsetX;
+    prevPosition.y = evt.offsetY;
+
+    RenderMap();
+  }
+}
+
+function MapKeyPress(evt)
+{
+  switch (evt.key)
+  {
+    case 'q':
+      ChangeState(EditorState_PlaceCell);
+      break;
+    case 'w':
+      ChangeState(EditorState_DeleteCell);
+      break;
+    case 'e':
+      ChangeState(EditorState_MoveCell);
+      break;
+    case 'r':
+      ChangeState(EditorState_LinkCell);
+      break;
+    case 't':
+      ChangeState(EditorState_RemoveLinkCell);
+      break;
+    case 'Escape':
+      ChangeState(EditorState_Default);
+      break;
+  }
+}
+
 function SnapToGrid(pos)
 {
   let gridX = document.getElementById('gridX').value;
   let gridY = document.getElementById('gridY').value;
 
-  pos.x = Math.floor(pos.x / gridX) * gridX;
-  pos.y = Math.floor(pos.y / gridY) * gridY;
+  pos.x = Math.floor((pos.x + gridX / 2) / gridX) * gridX;
+  pos.y = Math.floor((pos.y + gridY / 2) / gridY) * gridY;
 
   return pos;
 }
@@ -289,7 +386,13 @@ function ChangeState(state)
 
 function PlaceCell(pos)
 {
-  let cell = new MapCell(pos, 'Cell ' + (map.cells.length + 1));
+  let i = map.cells.length + 1;
+  while (map.getCellByName('Cell ' + i))
+  {
+    ++i;
+  }
+
+  let cell = new MapCell(pos, 'Cell ' + i);
   cell.size.x = document.getElementById('defaultCellSizeX').value;
   cell.size.y = document.getElementById('defaultCellSizeY').value;
 
@@ -304,6 +407,45 @@ function PlaceCell(pos)
 function RenderMap()
 {
   let ctx = can.getContext('2d');
+
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, can.width, can.height);
+
+  ctx.strokeStyle = 'lightgrey';
+
+  // draw grid
+  if (document.getElementById('snapGrid').checked)
+  {
+    let gridX = document.getElementById('gridX').value;
+    let gridY = document.getElementById('gridY').value;
+
+    let linesAcross = Math.ceil(can.width / gridX) + 2;
+    let linesDown = Math.ceil(can.height / gridY) + 2;
+
+    for (let i = 0; i < linesAcross; ++i)
+    {
+      ctx.beginPath();
+      {
+        ctx.moveTo((i - 1) * gridX - map.centre.x % gridX + gridX / 2, 0);
+        ctx.lineTo((i - 1)  * gridX - map.centre.x % gridX + gridX / 2, can.height);
+        ctx.stroke();
+      }
+      ctx.closePath();
+    }
+
+    for (let i = 0; i < linesDown; ++i)
+    {
+      ctx.beginPath();
+      {
+        ctx.moveTo(0, (i - 1)  * gridY - map.centre.y % gridY + gridY / 2);
+        ctx.lineTo(can.width, (i - 1)  * gridY - map.centre.y % gridY + gridY / 2);
+        ctx.stroke();
+      }
+      ctx.closePath();
+    }
+  }
+
+  // draw map
   map.render(ctx, can.width, can.height);
 }
 
