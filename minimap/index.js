@@ -134,7 +134,15 @@ function CustomCellRender(ctx, cell)
     }
     ctx.closePath();
 
-    ctx.fillText(cell.name, cell.position.x, cell.position.y);
+    let distance = '';
+    let idx = map.getCellIndexByName(cell.name);
+    if (selectedCellIdx > -1 && (map.paths[selectedCellIdx] || []).length)
+    {
+      // NOTE: This is gonna be hella slow
+      distance = '[' + (map.paths[selectedCellIdx][idx] || -1) + ']';
+    }
+
+    ctx.fillText(cell.name + `(${idx})` + distance, cell.position.x, cell.position.y);
   }
   ctx.restore();
 }
@@ -274,6 +282,8 @@ function MapClick(evt)
       if (!(document.getElementById('oneWayLink').checked))
         map.linkCells(idx, selectedCellIdx);
 
+      map.bakePaths();
+
       ChangeState(EditorState_Default);
       break;
     case EditorState_MoveCell:
@@ -299,6 +309,8 @@ function MapClick(evt)
         selectedCellIdx = -1;
       }
 
+      map.bakePaths();
+
       map.removeCellByIndex(idx);
       ChangeState(EditorState_Default);
       break;
@@ -306,6 +318,8 @@ function MapClick(evt)
       if (selectedCellIdx < 0 || selectedCellIdx == idx) break;
 
       map.cells[selectedCellIdx].removeCellIndex(idx);
+
+      map.bakePaths();
 
       ChangeState(EditorState_Default);
       break;

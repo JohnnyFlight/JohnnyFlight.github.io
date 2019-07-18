@@ -44,13 +44,13 @@ class MapCell
     }
   }
 
-  removeCellIndex(idx)
+  removeCellIndex(idx, shift = false)
   {
     // Remove index
     this.links = this.links.filter((x) => x != idx);
 
     // Adjust indexes
-    this.links = this.links.map((x) => x > idx ? x - 1 : x);
+    this.links = this.links.map((x) => (shift && x > idx) ? x - 1 : x);
   }
 
   isPointInCell(x, y)
@@ -83,8 +83,8 @@ class Map
   {
     this.centre = new Vector2(0, 0);
     this.cells = [];
-    // List of indexes of visible cells
-    this.visible = [];
+
+    this.paths = [];
   }
 
   getCellByName(name)
@@ -117,7 +117,7 @@ class Map
     for (let cell of this.cells)
     {
       // Remove and adjust all cell indexes
-      cell.removeCellIndex(idx);
+      cell.removeCellIndex(idx, true);
     }
   }
 
@@ -186,6 +186,66 @@ class Map
           }
         }
       }
+    }
+  }
+
+  getPathStep(fromIdx, toIdx)
+  {
+    if (!this.paths[fromIdx][toIdx]) return;
+
+    let output = [];
+    for (let link of this.cells[fromIdx].links)
+    {
+      if (this.paths[link][toIdx] < this.paths[fromIdx][toIdx])
+      {
+        output.push(link);
+      }
+    }
+
+    return output;
+  }
+
+  bakePaths()
+  {
+    this.paths = [];
+
+    // For each cell do flood fill to get links
+    for (let i in this.cells)
+    {
+      i = parseInt(i);
+
+      this.paths[i] = [];
+
+      let openSet = [i];
+      let closedSet = [];
+
+      let curIdx;
+      // Set distance of current cell to itself
+      this.paths[i][i] = 0;
+
+      do
+      {
+        curIdx = openSet.pop();
+
+        // Put all adjacent links in the open set and calculate distance
+        for (let link of this.cells[curIdx].links)
+        {
+          link = parseInt(link);
+
+          if (closedSet.indexOf(link) > -1) continue;
+
+          if (this.paths[i][link] == undefined)
+          {  
+            this.paths[i][link] = this.paths[i][curIdx] + 1;
+          }
+
+          closedSet.push(curIdx);
+          openSet.unshift(link);
+        }
+
+        closedSet.push(curIdx);
+      }
+      while (openSet.length);
     }
   }
 
@@ -339,8 +399,6 @@ class Map
     //let midPoint = toCell.position.subtract(fromCell.position).divide(2).add(fromCell.position);
 
     let midPoint = new Vector2((toCell.position.x - fromCell.position.x) / 2 + fromCell.position.x, (toCell.position.y - fromCell.position.y) / 2 + fromCell.position.y);
-
-    console.log(midPoint);
 
     ctx.beginPath();
     {
