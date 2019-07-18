@@ -23,14 +23,9 @@
     <h1>Minimap Demo</h1>
     <h2>TODO</h2>
     <ul>
-      <li>Remove cells</li>
-      <li>Remove links</li>
-      <li>Render grid</li>
       <li>Save to file</li>
+      <li>Save settings</li>
       <li>Pathing</li>
-      <li>Drag world</li>
-      <li>Event model in export</li>
-      <li>Hotkeys</li>
     </ul>
     <!--
       story settings
@@ -55,6 +50,7 @@
         <button type="button" name="button" id="saveCell">Save</button>
         <button type="button" name="button" id="linkCell">Link</button>
         One Way:<input id="oneWayLink" type="checkbox" name="check">
+        <button type="button" name="button" id="removeLinkCell">Remove Link</button>
         <button type="button" name="button" id="moveCell">Move</button>
       </li>
     </ul>
@@ -66,8 +62,10 @@
     <h2>Actions</h2>
     <ul>
       <li>State: <span id="editorState">Default</span> </li>
+      <li>Key: place (q) - delete (w) - move (e) - link (r) - removeLink (t) - clear (esc)</li>
     </ul>
     <button id="placeCell" type="button" name="placeCell">Add Cell</button>
+    <button id="deleteCell" type="button" name="deleteCell">Delete Cell</button>
     <br>Snap to grid: <input type="checkbox" id="snapGrid">
     Grid size: x:<input type="number" id="gridX" value="50"> y:<input type="number" id="gridY" value="50">
     <br>Cell size: x:<input type="number" id="cellX" value="50"> y:<input type="number" id="cellY" value="50">
@@ -105,6 +103,14 @@
       <li>Export validation (Make sure there's a passage called 'start')</li>
       <li>Map uncovering in export</li>
       <li>Snap to grid</li>
+      <li>Event model in export</li>
+      <li>18-07-2019</li>
+      <li>Remove cells</li>
+      <li>Drag world</li>
+      <li>Name on cell</li>
+      <li>Remove links</li>
+      <li>Render grid</li>
+      <li>Hotkeys</li>
     </ul>
   </body>
 </html>

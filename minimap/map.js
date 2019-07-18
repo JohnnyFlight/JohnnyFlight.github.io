@@ -44,6 +44,15 @@ class MapCell
     }
   }
 
+  removeCellIndex(idx)
+  {
+    // Remove index
+    this.links = this.links.filter((x) => x != idx);
+
+    // Adjust indexes
+    this.links = this.links.map((x) => x > idx ? x - 1 : x);
+  }
+
   isPointInCell(x, y)
   {
     let halfSize = new Vector2(this.size.x, this.size.y);
@@ -98,6 +107,18 @@ class Map
     }
 
     return -1;
+  }
+
+  removeCellByIndex(idx)
+  {
+    // Remove cell
+    this.cells = this.cells.filter((x, y) => y != idx);
+
+    for (let cell of this.cells)
+    {
+      // Remove and adjust all cell indexes
+      cell.removeCellIndex(idx);
+    }
   }
 
   getCellAtPoint(x, y)
@@ -230,9 +251,6 @@ class Map
   {
     //  Translate to centre of screen
     // Render each cell and it's half-connections if they're in range of the map centre and width
-
-		ctx.fillStyle = 'white';
-		ctx.fillRect(0, 0, width, height);
 
     for (let cell of this.cells)
     {
