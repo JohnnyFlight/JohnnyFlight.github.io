@@ -1,6 +1,7 @@
 let map;
 let can;
 let selectedCellIdx = -1;
+let pathCellIdx = -1;
 let prevPosition = {};
 
 // Define editor states here
@@ -10,6 +11,7 @@ const EditorState_LinkCell = 'linkCell';
 const EditorState_MoveCell = 'moveCell';
 const EditorState_DeleteCell = 'deleteCell';
 const EditorState_RemoveLinkCell = 'removeLinkCell';
+const EditorState_PathCell = 'pathCell';
 
 let editorDragging = false;
 
@@ -102,7 +104,8 @@ function SetupEventListeners()
 
 function CustomCellRender(ctx, cell)
 {
-  if (map.getCellIndexByName(cell.name) == selectedCellIdx)
+  let cellIdx = map.getCellIndexByName(cell.name);
+  if (cellIdx == selectedCellIdx)
   {
     ctx.strokeStyle = 'red';
     ctx.fillStyle = 'black';
@@ -131,6 +134,15 @@ function CustomCellRender(ctx, cell)
     {
       ctx.rect(cell.position.x, cell.position.y, cell.size.x, cell.size.y);
       ctx.stroke();
+
+      if (selectedCellIdx > -1 && pathCellIdx > -1)
+      {
+        if (map.paths[selectedCellIdx][pathCellIdx] == map.paths[selectedCellIdx][cellIdx] + map.paths[cellIdx][pathCellIdx])
+        {
+          ctx.fillStyle = 'darkgreen';
+          ctx.fill();
+        }
+      }
     }
     ctx.closePath();
 
@@ -767,6 +779,12 @@ function MapClick(evt)
 
       ChangeState(EditorState_Default);
       break;
+    case EditorState_PathCell:
+      if (idx == -1) break;
+      pathCellIdx = idx;
+
+      ChangeState(EditorState_Default);
+      break;
   }
 
   SaveToLocalStorage();
@@ -818,6 +836,9 @@ function MapKeyPress(evt)
       break;
     case 't':
       ChangeState(EditorState_RemoveLinkCell);
+      break;
+    case 'y':
+      ChangeState(EditorState_PathCell);
       break;
     case 'Escape':
       ChangeState(EditorState_Default);
