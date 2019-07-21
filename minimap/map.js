@@ -5,9 +5,9 @@
 
 class MapCell
 {
-  constructor(position, name, tags = [], links = [])
+  constructor(position, name, tags = [], links = [], size = { x: 40, y: 40 }, visible = true, hidden = false)
   {
-    // Vec2D
+    // Vector2
     this.position = position;
     this.name = name;
     this.tags = tags;
@@ -15,11 +15,19 @@ class MapCell
     // Array of indexes of other cells
     this.links = links;
 
-    this.size = new Vector2(40, 40);
+    this.size = size;
     // Visible means show on map
-    this.visible = true;
+    this.visible = visible;
     // Hidden means don't draw link
-    this.hidden = false;
+    this.hidden = hidden;
+  }
+
+  generateInitCode(mapReveal = false)
+  {
+    // Assumes there's already an object called map that been created
+    let output = `map.cells.push(new MapCell({ x: ${this.position.x}, y: ${this.position.y}}, '${this.name}', [${this.tags.map((x) => '"' + x + '"').join(', ')}], [${this.links.join(', ')}], { x: ${this.size.x}, y: ${this.size.y} }, ${mapReveal ? false : this.visible}, ${this.hidden}));`;
+
+    return output;
   }
 
   hasTag(tag)
@@ -55,7 +63,7 @@ class MapCell
 
   isPointInCell(x, y)
   {
-    let halfSize = new Vector2(this.size.x, this.size.y);
+    let halfSize = { x: this.size.x, y: this.size.y };
     halfSize.x /= 2;
     halfSize.y /= 2;
 
@@ -79,12 +87,27 @@ class Path
 
 class Map
 {
-  constructor()
+  constructor(centre = { x: 0, y: 0 })
   {
-    this.centre = new Vector2(0, 0);
+    this.centre = centre;
     this.cells = [];
 
     this.paths = [];
+  }
+
+  generateInitCode(mapReveal = false)
+  {
+    let output = `let map = new Map({ x: ${this.centre.x}, y: ${this.centre.y} });\n`;
+
+    for (let cell of this.cells)
+    {
+      output += '\n';
+      output += `${cell.generateInitCode(mapReveal)}`;
+    }
+
+    output += '\n\nmap.bakePaths();';
+
+    return output;
   }
 
   getCellByName(name)
@@ -235,7 +258,7 @@ class Map
           if (closedSet.indexOf(link) > -1) continue;
 
           if (this.paths[i][link] == undefined)
-          {  
+          {
             this.paths[i][link] = this.paths[i][curIdx] + 1;
           }
 
@@ -398,7 +421,10 @@ class Map
 
     //let midPoint = toCell.position.subtract(fromCell.position).divide(2).add(fromCell.position);
 
-    let midPoint = new Vector2((toCell.position.x - fromCell.position.x) / 2 + fromCell.position.x, (toCell.position.y - fromCell.position.y) / 2 + fromCell.position.y);
+    let midPoint = {
+      x: (toCell.position.x - fromCell.position.x) / 2 + fromCell.position.x,
+      y: (toCell.position.y - fromCell.position.y) / 2 + fromCell.position.y
+    };
 
     ctx.beginPath();
     {
