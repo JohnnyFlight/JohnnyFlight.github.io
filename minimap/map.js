@@ -22,69 +22,58 @@ class MapCell
     this.hidden = hidden;
   }
 
-  generateInitCode(mapReveal = false)
+  static generateInitCode(cell, mapReveal = false)
   {
     // Assumes there's already an object called map that been created
-    let output = `map.cells.push(new MapCell({ x: ${this.position.x}, y: ${this.position.y}}, '${this.name}', [${this.tags.map((x) => '"' + x + '"').join(', ')}], [${this.links.join(', ')}], { x: ${this.size.x}, y: ${this.size.y} }, ${mapReveal ? false : this.visible}, ${this.hidden}));`;
+    let output = `map.cells.push(new MapCell({ x: ${cell.position.x}, y: ${cell.position.y}}, '${cell.name}', [${cell.tags.map((x) => '"' + x + '"').join(', ')}], [${cell.links.join(', ')}], { x: ${cell.size.x}, y: ${cell.size.y} }, ${mapReveal ? false : cell.visible}, ${cell.hidden}));`;
 
     return output;
   }
 
-  hasTag(tag)
+  static hasTag(cell, tag)
   {
-    return this.tags.indexOf(tag) > -1;
+    return cell.tags.indexOf(tag) > -1;
   }
 
-  addTag(tag)
+  static addTag(cell, tag)
   {
-    if (this.tags.indexOf(tag) == -1)
+    if (cell.tags.indexOf(tag) == -1)
     {
-      this.tags.push(tag);
+      cell.tags.push(tag);
     }
   }
 
-  removeTag(tag)
+  static removeTag(cell, tag)
   {
-    let index = this.tags.indexOf(tag);
+    let index = cell.tags.indexOf(tag);
     while (index > -1)
     {
-      this.tags.splice(index, 1);
+      cell.tags.splice(index, 1);
     }
   }
 
-  removeCellIndex(idx, shift = false)
+  static removeCellIndex(cell, idx, shift = false)
   {
-    console.log(this);
     // Remove index
-    this.links = this.links.filter((x) => x != idx);
+    cell.links = cell.links.filter((x) => x != idx);
 
-    console.log(this);
     // Adjust indexes
-    this.links = this.links.map((x) => (shift && (parseInt(x) > idx)) ? x - 1 : x);
-    console.log(this);
+    cell.links = cell.links.map((x) => (shift && (parseInt(x) > idx)) ? x - 1 : x);
   }
 
-  isPointInCell(x, y)
+  static isPointInCell(cell, x, y)
   {
-    let halfSize = { x: this.size.x, y: this.size.y };
+    let halfSize = { x: cell.size.x, y: cell.size.y };
     halfSize.x /= 2;
     halfSize.y /= 2;
 
     // NOTE: Point in map space
-    if (x < this.position.x - halfSize.x) return false;
-    if (x > this.position.x + halfSize.x) return false;
-    if (y < this.position.y - halfSize.y) return false;
-    if (y > this.position.y + halfSize.y) return false;
+    if (x < cell.position.x - halfSize.x) return false;
+    if (x > cell.position.x + halfSize.x) return false;
+    if (y < cell.position.y - halfSize.y) return false;
+    if (y > cell.position.y + halfSize.y) return false;
 
     return true;
-  }
-};
-
-class Path
-{
-  constructor()
-  {
-
   }
 };
 
@@ -98,11 +87,11 @@ class MiniMap
     this.paths = [];
   }
 
-  generateInitCode(mapReveal = false)
+  static generateInitCode(map, mapReveal = false)
   {
-    let output = `let map = new MiniMap({ x: ${this.centre.x}, y: ${this.centre.y} });\n`;
+    let output = `let map = new MiniMap({ x: ${map.centre.x}, y: ${map.centre.y} });\n`;
 
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
       output += '\n';
       output += `${cell.generateInitCode(mapReveal)}`;
@@ -113,9 +102,9 @@ class MiniMap
     return output;
   }
 
-  getCellByName(name)
+  static getCellByName(map, name)
   {
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
       if (cell.name == name)
         return cell;
@@ -124,34 +113,34 @@ class MiniMap
     return false;
   }
 
-  getCellIndexByName(name)
+  static getCellIndexByName(map, name)
   {
-    for (let cell in this.cells)
+    for (let cell in map.cells)
     {
-      if (this.cells[cell].name == name)
+      if (map.cells[cell].name == name)
         return cell;
     }
 
     return -1;
   }
 
-  removeCellByIndex(idx)
+  static removeCellByIndex(map, idx)
   {
     // Remove cell
-    this.cells = this.cells.filter((x, y) => y != idx);
+    map.cells = map.cells.filter((x, y) => y != idx);
 
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
       // Remove and adjust all cell indexes
-      cell.removeCellIndex(idx, true);
+      MapCell.removeCellIndex(cell, idx, true);
     }
   }
 
-  getCellAtPoint(x, y)
+  static getCellAtPoint(map, x, y)
   {
     // NOTE: Point is in Map space
     // Will need to be translated when using ie mouse clicks
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
       if (cell.isPointInCell(x, y))
         return cell;
@@ -160,52 +149,52 @@ class MiniMap
     return false;
   }
 
-  getCellIndexAtPoint(x, y)
+  static getCellIndexAtPoint(map, x, y)
   {
     // NOTE: Point is in Map space
     // Will need to be translated when using ie mouse clicks
-    for (let cell in this.cells)
+    for (let cell in map.cells)
     {
-      if (this.cells[cell].isPointInCell(x, y))
+      if (MapCell.isPointInCell(map.cells[cell], x, y))
         return cell;
     }
 
     return -1;
   }
 
-  getCellsByTag(tag)
+  static getCellsByTag(map, tag)
   {
     let output = [];
 
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
-      if (cell.hasTag())
+      if (MapCell.hasTag(cell))
         output.push(cell);
     }
 
     return output;
   }
 
-  centreCellWithName(name)
+  static centreCellWithName(map, name)
   {
-    let cell = this.getCellByName(name);
+    let cell = MiniMap.getCellByName(map, name);
     if (!cell) return;
 
-    this.centre = cell.position;
+    map.centre = cell.position;
   }
 
   // Looks through map cell links and turns string names into indexes
-  resolveCellLinkNames()
+  static resolveCellLinkNames(map)
   {
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
       for (let l in cell.links)
       {
         if (typeof cell.links[l] == 'string')
         {
-          for (let i in this.cells)
+          for (let i in map.cells)
           {
-            if (this.cells[i].name == cell.links[l])
+            if (map.cells[i].name == cell.links[l])
             {
               cell.links[l] = parseInt(i);
             }
@@ -215,14 +204,14 @@ class MiniMap
     }
   }
 
-  getPathStep(fromIdx, toIdx)
+  static getPathStep(map, fromIdx, toIdx)
   {
-    if (!this.paths[fromIdx][toIdx]) return;
+    if (!map.paths[fromIdx][toIdx]) return;
 
     let output = [];
-    for (let link of this.cells[fromIdx].links)
+    for (let link of map.cells[fromIdx].links)
     {
-      if (this.paths[link][toIdx] < this.paths[fromIdx][toIdx])
+      if (map.paths[link][toIdx] < map.paths[fromIdx][toIdx])
       {
         output.push(link);
       }
@@ -231,38 +220,38 @@ class MiniMap
     return output;
   }
 
-  bakePaths()
+  static bakePaths(map)
   {
-    this.paths = [];
+    map.paths = [];
 
     // For each cell do flood fill to get links
-    for (let i in this.cells)
+    for (let i in map.cells)
     {
       i = parseInt(i);
 
-      this.paths[i] = [];
+      map.paths[i] = [];
 
       let openSet = [i];
       let closedSet = [];
 
       let curIdx;
       // Set distance of current cell to itself
-      this.paths[i][i] = 0;
+      map.paths[i][i] = 0;
 
       do
       {
         curIdx = openSet.pop();
 
         // Put all adjacent links in the open set and calculate distance
-        for (let link of this.cells[curIdx].links)
+        for (let link of map.cells[curIdx].links)
         {
           link = parseInt(link);
 
           if (closedSet.indexOf(link) > -1) continue;
 
-          if (this.paths[i][link] == undefined)
+          if (map.paths[i][link] == undefined)
           {
-            this.paths[i][link] = this.paths[i][curIdx] + 1;
+            map.paths[i][link] = map.paths[i][curIdx] + 1;
           }
 
           closedSet.push(curIdx);
@@ -275,27 +264,27 @@ class MiniMap
     }
   }
 
-  linkCells(from, to)
+  static linkCells(map, from, to)
   {
-    if (this.cells[from].links.indexOf(to) > -1) return;
+    if (map.cells[from].links.indexOf(to) > -1) return;
 
-    this.cells[from].links.push(to);
+    map.cells[from].links.push(to);
   }
 
-  setCellVisibilityByTag(tag, visibility)
+  static setCellVisibilityByTag(map, tag, visibility)
   {
-    for (var cell of this.cells)
+    for (var cell of map.cells)
     {
-      if (cell.hasTag(tag))
+      if (MapCell.hasTag(cell, tag))
       {
         cell.visible = visibility;
       }
     }
   }
 
-  setCellVisibilityByName(name, visibility)
+  static setCellVisibilityByName(map, name, visibility)
   {
-    for (var cell of this.cells)
+    for (var cell of map.cells)
     {
       if (cell.name == name)
       {
@@ -305,59 +294,59 @@ class MiniMap
     }
   }
 
-  setCellHiddenByTag(tag, hidden)
+  static setCellHiddenByTag(map, tag, hidden)
   {
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
-      if (cell.hasTag(tag))
+      if (MapCell.hasTag(cell, tag))
       {
         cell.hidden = hidden;
       }
     }
   }
 
-  setCellVisibilityAll(visibility)
+  static setCellVisibilityAll(map, visibility)
   {
-    for (var cell of this.cells)
+    for (var cell of map.cells)
     {
       cell.visible = visibility;
     }
   }
 
-  setCellHiddenAll(hidden)
+  static setCellHiddenAll(map, hidden)
   {
-    for (var cell of this.cells)
+    for (var cell of map.cells)
     {
       cell.hidden = hidden;
     }
   }
 
   // style function accepts a context and modifies the stroke and line width of the context for the purpose of rendering the next cell
-  render(ctx, width, height)
+  static render(map, ctx, width, height)
   {
     //  Translate to centre of screen
     // Render each cell and it's half-connections if they're in range of the map centre and width
 
-    for (let cell of this.cells)
+    for (let cell of map.cells)
     {
       ctx.save();
       {
-        ctx.translate(width / 2 - this.centre.x, height / 2 - this.centre.y);
+        ctx.translate(width / 2 - map.centre.x, height / 2 - map.centre.y);
 
         ctx.save();
         {
-          this.renderCell(ctx, cell);
+          MiniMap.renderCell(map, ctx, cell);
         }
         ctx.restore();
         // Render cell connections
         for (let conIdx of cell.links)
         {
-          let con = this.cells[conIdx];
+          let con = map.cells[conIdx];
           if (!con) continue;
 
           ctx.save();
           {
-            this.renderPath(ctx, cell, con);
+            MiniMap.renderPath(map, ctx, cell, con);
           }
           ctx.restore();
         }
@@ -366,11 +355,11 @@ class MiniMap
     }
   }
 
-  renderCell(ctx, cell)
+  static renderCell(map, ctx, cell)
   {
-    if (this.customRenderCell)
+    if (map.customRenderCell)
     {
-      this.customRenderCell(ctx, cell);
+      map.customRenderCell(ctx, cell);
       return;
     }
 
@@ -394,7 +383,7 @@ class MiniMap
     ctx.restore();
 
 
-    if (cell.hasTag('goal'))
+    if (MapCell.hasTag(cell, 'goal'))
     {
       ctx.save();
       ctx.beginPath();
@@ -408,11 +397,11 @@ class MiniMap
     }
   }
 
-  renderPath(ctx, fromCell, toCell)
+  static renderPath(map, ctx, fromCell, toCell)
   {
-    if (this.customRenderPath)
+    if (map.customRenderPath)
     {
-      this.customRenderPath(ctx, fromCell, toCell);
+      map.customRenderPath(ctx, fromCell, toCell);
       return;
     }
 

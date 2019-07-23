@@ -118,7 +118,7 @@ function SetupEventListeners()
 
 function CustomCellRender(ctx, cell)
 {
-  let cellIdx = map.getCellIndexByName(cell.name);
+  let cellIdx = MiniMap.getCellIndexByName(map, cell.name);
   if (cellIdx == selectedCellIdx)
   {
     ctx.strokeStyle = 'red';
@@ -161,7 +161,7 @@ function CustomCellRender(ctx, cell)
     ctx.closePath();
 
     let distance = '';
-    let idx = map.getCellIndexByName(cell.name);
+    let idx = MiniMap.getCellIndexByName(map, cell.name);
     if (selectedCellIdx > -1 && (map.paths[selectedCellIdx] || []).length)
     {
       // NOTE: This is gonna be hella slow
@@ -175,7 +175,7 @@ function CustomCellRender(ctx, cell)
 
 function ExportTweego()
 {
-  if (map.getCellIndexByName('Start') == -1)
+  if (MiniMap.getCellIndexByName(map, 'Start') == -1)
   {
     alert('No Start passage found (case sensitive)');
     return;
@@ -197,7 +197,7 @@ ifid:Map Export
 <<script>>
 ${printMapCode()}
 ${printEventCode()}
-${map.generateInitCode(includeMapReveal)}
+${MiniMap.generateInitCode(map, includeMapReveal)}
 
 State.variables.map = map;
 <</script>>
@@ -219,7 +219,7 @@ ${includeEvents ? '<<print GetEventsForScene("' + cell.name + '")>>' : ''}
 ${cell.flavourText || ''}\n\n`;
 
     if (!includeEventNavigation)
-    {      
+    {
       for (let linkIdx of cell.links)
       {
         let link = map.cells[linkIdx];
@@ -767,7 +767,7 @@ function LoadFromLocalStorage()
 function MapClick(evt)
 {
   let pos = new Vector2(evt.offsetX - can.width / 2 + map.centre.x, evt.offsetY - can.height / 2 + map.centre.y);
-  let idx = map.getCellIndexAtPoint(pos.x, pos.y);
+  let idx = MiniMap.getCellIndexAtPoint(map, pos.x, pos.y);
 
   switch (editorState)
   {
@@ -789,9 +789,9 @@ function MapClick(evt)
 
       map.linkCells(selectedCellIdx, idx);
       if (!(document.getElementById('oneWayLink').checked))
-        map.linkCells(idx, selectedCellIdx);
+        MiniMap.linkCells(map, idx, selectedCellIdx);
 
-      map.bakePaths();
+      MiniMap.bakePaths(map);
 
       ChangeState(EditorState_Default);
       break;
@@ -818,17 +818,17 @@ function MapClick(evt)
         selectedCellIdx = -1;
       }
 
-      map.bakePaths();
+      MiniMap.bakePaths(map);
 
-      map.removeCellByIndex(idx);
+      MiniMap.removeCellByIndex(map, idx);
       ChangeState(EditorState_Default);
       break;
     case EditorState_RemoveLinkCell:
       if (selectedCellIdx < 0 || selectedCellIdx == idx) break;
 
-      map.cells[selectedCellIdx].removeCellIndex(idx);
+      MapCell.removeCellIndex(map.cells[selectedCellIdx], idx);
 
-      map.bakePaths();
+      MiniMap.bakePaths(map);
 
       ChangeState(EditorState_Default);
       break;
@@ -919,7 +919,7 @@ function ChangeState(state)
 function PlaceCell(pos)
 {
   let i = map.cells.length + 1;
-  while (map.getCellByName('Cell ' + i))
+  while (MiniMap.getCellByName(map, 'Cell ' + i))
   {
     ++i;
   }
@@ -978,7 +978,7 @@ function RenderMap()
   }
 
   // draw map
-  map.render(ctx, can.width, can.height);
+  MiniMap.render(map, ctx, can.width, can.height);
 }
 
 function printCell(cell)
