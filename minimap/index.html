@@ -23,8 +23,10 @@
     <h1>Minimap Demo</h1>
     <h2>TODO</h2>
     <ul>
-      <li>Save to file</li>
-      <li>Save settings</li>
+      <li>Include event model on export</li>
+      <li>Add option to incorporate navigation into event model</li>
+      <li>Make map member functions static becuase Twine eurgh</li>
+      <li>Don't add anything else because you know what you're like with scope creep</li>
     </ul>
     <!--
       story settings
@@ -79,6 +81,7 @@
     <ul>
       <li>Include Events <input type="checkbox" id="includeEvents"></li>
       <li>Include Map <input type="checkbox" id="includeMap"></li>
+      <li>Make Navigation Event-based <input type="checkbox" id="includeEventNavigation"></li>
       <li>Include Map Reveal <input type="checkbox" id="includeMapReveal"></li>
       <li><button id="exportTweego" type="button" name="exportTweego">Export Tweego</button></li>
   </ul>
@@ -115,6 +118,8 @@
       <li>Actually exporting the damn map init code which was the point of this editor in the first place</li>
       <li>Make invisible all cells when map reveal included</li>
       <li>Fix Render Pathing</li>
+      <li>22-07-2019</li>
+      <li>Save settings</li>
     </ul>
   </body>
 </html>

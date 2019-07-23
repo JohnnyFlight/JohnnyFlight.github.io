@@ -54,11 +54,14 @@ class MapCell
 
   removeCellIndex(idx, shift = false)
   {
+    console.log(this);
     // Remove index
     this.links = this.links.filter((x) => x != idx);
 
+    console.log(this);
     // Adjust indexes
-    this.links = this.links.map((x) => (shift && x > idx) ? x - 1 : x);
+    this.links = this.links.map((x) => (shift && (parseInt(x) > idx)) ? x - 1 : x);
+    console.log(this);
   }
 
   isPointInCell(x, y)
@@ -85,7 +88,7 @@ class Path
   }
 };
 
-class Map
+class MiniMap
 {
   constructor(centre = { x: 0, y: 0 })
   {
@@ -97,7 +100,7 @@ class Map
 
   generateInitCode(mapReveal = false)
   {
-    let output = `let map = new Map({ x: ${this.centre.x}, y: ${this.centre.y} });\n`;
+    let output = `let map = new MiniMap({ x: ${this.centre.x}, y: ${this.centre.y} });\n`;
 
     for (let cell of this.cells)
     {
