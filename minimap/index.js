@@ -23,7 +23,7 @@ window.onload = () => {
     LoadFromLocalStorage();
   }
   else {
-    map = new Map();
+    map = new MiniMap();
 
     map.cells.push(new MapCell(new Vector2(0, 0), 'Start', ['start']));
     document.getElementById('storyTitle').value = 'New Story';
@@ -75,6 +75,16 @@ function SetupEventListeners()
 
   document.getElementById('cellTags').onchange = Autosave;
 
+  document.getElementById('includeEvents').onchange = Autosave;
+  document.getElementById('includeMap').onchange = Autosave;
+  document.getElementById('includeMapReveal').onchange = Autosave;
+
+  document.getElementById('cellX').onchange = Autosave;
+  document.getElementById('cellY').onchange = Autosave;
+
+  document.getElementById('gridX').onchange = Autosave;
+  document.getElementById('gridY').onchange = Autosave;
+
   document.getElementById('linkCell').onclick = () =>
   {
     if (selectedCellIdx < 0) return;
@@ -97,7 +107,11 @@ function SetupEventListeners()
 
   document.getElementById('saveCell').onclick = SaveCellDetails;
 
-  document.getElementById('snapGrid').onchange = RenderMap;
+  document.getElementById('snapGrid').onchange = () => {
+    RenderMap();
+    Autosave();
+  };
+
   document.getElementById('gridX').onchange = RenderMap;
   document.getElementById('gridY').onchange = RenderMap;
 }
@@ -169,6 +183,7 @@ function ExportTweego()
 
   let includeMap = document.getElementById('includeMap').checked;
   let includeEvents = document.getElementById('includeEvents').checked;
+  let includeEventNavigation = document.getElementById('includeEventNavigation').checked;
   let includeMapReveal = document.getElementById('includeMapReveal').checked;
 
   // Need this boilerplate so Tweego can compile from export
@@ -181,6 +196,7 @@ ifid:Map Export
 :: StoryInit
 <<script>>
 ${printMapCode()}
+${printEventCode()}
 ${map.generateInitCode(includeMapReveal)}
 
 State.variables.map = map;
@@ -190,7 +206,7 @@ State.variables.map = map;
 
 :: StoryCaption
 ${includeMap ? '<canvas id="canvas" width="200" height="200"></canvas>' : ''}
-${includeMap ? '<<script>>State.variables.RenderMap();<</script>>' : ''}\n\n`;
+${includeMap ? '<<script>>RenderMap();<</script>>' : ''}\n\n`;
 
   for (let cell of map.cells)
   {
@@ -198,18 +214,21 @@ ${includeMap ? '<<script>>State.variables.RenderMap();<</script>>' : ''}\n\n`;
 ${includeMap ? '<<set $mapName to "' + cell.name + '">>' : ''}
 ${includeMapReveal ? '<<print $map.setCellVisibilityByName("' + cell.name + '", true)>>' : ''}
 
-${includeEvents ? '<<print $GetEventsForScene("' + cell.name + '")>>' : ''}
+${includeEvents ? '<<print GetEventsForScene("' + cell.name + '")>>' : ''}
 
 ${cell.flavourText || ''}\n\n`;
 
-    for (let linkIdx of cell.links)
-    {
-      let link = map.cells[linkIdx];
+    if (!includeEventNavigation)
+    {      
+      for (let linkIdx of cell.links)
+      {
+        let link = map.cells[linkIdx];
 
-      output += `[[${link.name}]]\n`;
+        output += `[[${link.name}]]\n`;
+      }
+
+      output += '\n\n';
     }
-
-    output += '\n\n';
   }
 
   document.getElementById('export').innerHTML = output;
@@ -296,7 +315,7 @@ function printMapCode()
     }
   };
 
-  class Map
+  class MiniMap
   {
     constructor(centre = { x: 0, y: 0 })
     {
@@ -632,7 +651,10 @@ function printMapCode()
     }
   };
 
-  State.variables.RenderMap = () =>
+  window.MapCell = MapCell;
+  window.MiniMap = MiniMap;
+
+  window.RenderMap = () =>
   {
     let can = document.getElementById('canvas');
 
@@ -651,9 +673,20 @@ function printMapCode()
   return output;
 }
 
+function printEventCode()
+{
+  let output = `window.GetEventsForScene = () =>
+  {
+    return 'Event';
+  }`;
+
+  return output;
+}
+
 function Autosave()
 {
   SaveCellDetails();
+  SaveToLocalStorage();
 }
 
 function SaveCellDetails()
@@ -687,10 +720,20 @@ function SaveToLocalStorage()
     map: map,
     title: document.getElementById('storyTitle').value,
     defaults: {
+      snapToGrid: document.getElementById('snapGrid').checked,
       cellSize: {
         x: document.getElementById('defaultCellSizeX').value,
         y: document.getElementById('defaultCellSizeY').value
+      },
+      gridSize: {
+        x: document.getElementById('gridX').value,
+        y: document.getElementById('gridY').value
       }
+    },
+    exportSettings: {
+      includeEvents: document.getElementById('includeEvents').checked,
+      includeMap: document.getElementById('includeMap').checked,
+      includeMapReveal: document.getElementById('includeMapReveal').checked
     }
   });
 }
@@ -698,12 +741,22 @@ function SaveToLocalStorage()
 function LoadFromLocalStorage()
 {
   let load = JSON.parse(localStorage.map);
-  map = Object.assign(new Map(), load.map);
+  map = Object.assign(new MiniMap(), load.map);
 
   document.getElementById('storyTitle').value = load.title;
 
   document.getElementById('defaultCellSizeX').value = load.defaults.cellSize.x;
   document.getElementById('defaultCellSizeY').value = load.defaults.cellSize.y;
+
+  document.getElementById('snapGrid').checked = load.defaults.snapToGrid;
+
+  document.getElementById('gridX').value = load.defaults.gridSize.x;
+  document.getElementById('gridY').value = load.defaults.gridSize.y;
+
+  document.getElementById('includeEvents').checked = load.exportSettings.includeEvents;
+  document.getElementById('includeMap').checked = load.exportSettings.includeMap;
+  document.getElementById('includeEventNavigation').checked = load.exportSettings.includeEventNavigation;
+  document.getElementById('includeMapReveal').checked = load.exportSettings.includeMapReveal;
 
   for (let cell in map.cells)
   {
