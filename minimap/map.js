@@ -94,10 +94,10 @@ class MiniMap
     for (let cell of map.cells)
     {
       output += '\n';
-      output += `${cell.generateInitCode(mapReveal)}`;
+      output += `${MapCell.generateInitCode(cell, mapReveal)}`;
     }
 
-    output += '\n\nmap.bakePaths();';
+    output += '\n\nMiniMap.bakePaths(map);';
 
     return output;
   }

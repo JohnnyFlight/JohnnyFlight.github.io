@@ -77,6 +77,7 @@ function SetupEventListeners()
 
   document.getElementById('includeEvents').onchange = Autosave;
   document.getElementById('includeMap').onchange = Autosave;
+  document.getElementById('includeEventNavigation').onchange = Autosave;
   document.getElementById('includeMapReveal').onchange = Autosave;
 
   document.getElementById('cellX').onchange = Autosave;
@@ -103,7 +104,9 @@ function SetupEventListeners()
     ChangeState(EditorState_MoveCell);
   }
 
-  document.getElementById('exportTweego').onclick = ExportTweego
+  document.getElementById('exportTweego').onclick = ExportTweego;
+  document.getElementById('exportJSON').onclick = ExportJSON;
+  document.getElementById('importJSON').onclick = ImportJSON;
 
   document.getElementById('saveCell').onclick = SaveCellDetails;
 
@@ -196,7 +199,6 @@ ifid:Map Export
 :: StoryInit
 <<script>>
 ${printMapCode()}
-${printEventCode()}
 ${MiniMap.generateInitCode(map, includeMapReveal)}
 
 State.variables.map = map;
@@ -212,7 +214,7 @@ ${includeMap ? '<<script>>RenderMap();<</script>>' : ''}\n\n`;
   {
     output += `:: ${cell.name} [ ${cell.tags.toString()} ]
 ${includeMap ? '<<set $mapName to "' + cell.name + '">>' : ''}
-${includeMapReveal ? '<<print $map.setCellVisibilityByName("' + cell.name + '", true)>>' : ''}
+${includeMapReveal ? '<<print MiniMap.setCellVisibilityByName($map, "' + cell.name + '", true)>>' : ''}
 
 ${includeEvents ? '<<print GetEventsForScene("' + cell.name + '")>>' : ''}
 
@@ -231,7 +233,38 @@ ${cell.flavourText || ''}\n\n`;
     }
   }
 
-  document.getElementById('export').innerHTML = output;
+  if (includeEventNavigation)
+  {
+    output += `:: EventNavigation [ script ]
+    ${printEventCode()}
+
+    alert();
+State.variables.events = State.variables.events || [];\n\n`;
+    for (let cell of map.cells)
+    {
+      output += `State.variables.events.push(new StoryEvent("${cell.name} Navigation",
+    [${ cell.links.map((x) => `"${map.cells[x].name}"`).join(', ') }],
+    (scene) =>
+    {
+      return EventPassage('${cell.name}', '${cell.name}');
+    }));\n\n`;
+    }
+  }
+
+  document.getElementById('export').value = output;
+}
+
+function ExportJSON()
+{
+  document.getElementById('export').value = JSON.stringify(map);
+}
+
+function ImportJSON()
+{
+  map = Object.assign(new MiniMap(), JSON.parse(document.getElementById('export').value));
+  map.customRenderCell = CustomCellRender;
+  console.log(map);
+  RenderMap();
 }
 
 function printMapCode()
@@ -260,58 +293,50 @@ function printMapCode()
       this.hidden = hidden;
     }
 
-    hasTag(tag)
+    static hasTag(cell, tag)
     {
-      return this.tags.indexOf(tag) > -1;
+      return cell.tags.indexOf(tag) > -1;
     }
 
-    addTag(tag)
+    static addTag(cell, tag)
     {
-      if (this.tags.indexOf(tag) == -1)
+      if (cell.tags.indexOf(tag) == -1)
       {
-        this.tags.push(tag);
+        cell.tags.push(tag);
       }
     }
 
-    removeTag(tag)
+    static removeTag(cell, tag)
     {
-      let index = this.tags.indexOf(tag);
+      let index = cell.tags.indexOf(tag);
       while (index > -1)
       {
-        this.tags.splice(index, 1);
+        cell.tags.splice(index, 1);
       }
     }
 
-    removeCellIndex(idx, shift = false)
+    static removeCellIndex(cell, idx, shift = false)
     {
       // Remove index
-      this.links = this.links.filter((x) => x != idx);
+      cell.links = cell.links.filter((x) => x != idx);
 
       // Adjust indexes
-      this.links = this.links.map((x) => (shift && x > idx) ? x - 1 : x);
+      cell.links = cell.links.map((x) => (shift && (parseInt(x) > idx)) ? x - 1 : x);
     }
 
-    isPointInCell(x, y)
+    static isPointInCell(cell, x, y)
     {
-      let halfSize = { x: this.size.x, y: this.size.y };
+      let halfSize = { x: cell.size.x, y: cell.size.y };
       halfSize.x /= 2;
       halfSize.y /= 2;
 
       // NOTE: Point in map space
-      if (x < this.position.x - halfSize.x) return false;
-      if (x > this.position.x + halfSize.x) return false;
-      if (y < this.position.y - halfSize.y) return false;
-      if (y > this.position.y + halfSize.y) return false;
+      if (x < cell.position.x - halfSize.x) return false;
+      if (x > cell.position.x + halfSize.x) return false;
+      if (y < cell.position.y - halfSize.y) return false;
+      if (y > cell.position.y + halfSize.y) return false;
 
       return true;
-    }
-  };
-
-  class Path
-  {
-    constructor()
-    {
-
     }
   };
 
@@ -325,9 +350,9 @@ function printMapCode()
       this.paths = [];
     }
 
-    getCellByName(name)
+    static getCellByName(map, name)
     {
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
         if (cell.name == name)
           return cell;
@@ -336,34 +361,34 @@ function printMapCode()
       return false;
     }
 
-    getCellIndexByName(name)
+    static getCellIndexByName(map, name)
     {
-      for (let cell in this.cells)
+      for (let cell in map.cells)
       {
-        if (this.cells[cell].name == name)
+        if (map.cells[cell].name == name)
           return cell;
       }
 
       return -1;
     }
 
-    removeCellByIndex(idx)
+    static removeCellByIndex(map, idx)
     {
       // Remove cell
-      this.cells = this.cells.filter((x, y) => y != idx);
+      map.cells = map.cells.filter((x, y) => y != idx);
 
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
         // Remove and adjust all cell indexes
-        cell.removeCellIndex(idx, true);
+        MapCell.removeCellIndex(cell, idx, true);
       }
     }
 
-    getCellAtPoint(x, y)
+    static getCellAtPoint(map, x, y)
     {
       // NOTE: Point is in Map space
       // Will need to be translated when using ie mouse clicks
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
         if (cell.isPointInCell(x, y))
           return cell;
@@ -372,52 +397,52 @@ function printMapCode()
       return false;
     }
 
-    getCellIndexAtPoint(x, y)
+    static getCellIndexAtPoint(map, x, y)
     {
       // NOTE: Point is in Map space
       // Will need to be translated when using ie mouse clicks
-      for (let cell in this.cells)
+      for (let cell in map.cells)
       {
-        if (this.cells[cell].isPointInCell(x, y))
+        if (MapCell.isPointInCell(map.cells[cell], x, y))
           return cell;
       }
 
       return -1;
     }
 
-    getCellsByTag(tag)
+    static getCellsByTag(map, tag)
     {
       let output = [];
 
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
-        if (cell.hasTag())
+        if (MapCell.hasTag(cell))
           output.push(cell);
       }
 
       return output;
     }
 
-    centreCellWithName(name)
+    static centreCellWithName(map, name)
     {
-      let cell = this.getCellByName(name);
+      let cell = MiniMap.getCellByName(map, name);
       if (!cell) return;
 
-      this.centre = cell.position;
+      map.centre = cell.position;
     }
 
     // Looks through map cell links and turns string names into indexes
-    resolveCellLinkNames()
+    static resolveCellLinkNames(map)
     {
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
         for (let l in cell.links)
         {
           if (typeof cell.links[l] == 'string')
           {
-            for (let i in this.cells)
+            for (let i in map.cells)
             {
-              if (this.cells[i].name == cell.links[l])
+              if (map.cells[i].name == cell.links[l])
               {
                 cell.links[l] = parseInt(i);
               }
@@ -427,14 +452,14 @@ function printMapCode()
       }
     }
 
-    getPathStep(fromIdx, toIdx)
+    static getPathStep(map, fromIdx, toIdx)
     {
-      if (!this.paths[fromIdx][toIdx]) return;
+      if (!map.paths[fromIdx][toIdx]) return;
 
       let output = [];
-      for (let link of this.cells[fromIdx].links)
+      for (let link of map.cells[fromIdx].links)
       {
-        if (this.paths[link][toIdx] < this.paths[fromIdx][toIdx])
+        if (map.paths[link][toIdx] < map.paths[fromIdx][toIdx])
         {
           output.push(link);
         }
@@ -443,38 +468,38 @@ function printMapCode()
       return output;
     }
 
-    bakePaths()
+    static bakePaths(map)
     {
-      this.paths = [];
+      map.paths = [];
 
       // For each cell do flood fill to get links
-      for (let i in this.cells)
+      for (let i in map.cells)
       {
         i = parseInt(i);
 
-        this.paths[i] = [];
+        map.paths[i] = [];
 
         let openSet = [i];
         let closedSet = [];
 
         let curIdx;
         // Set distance of current cell to itself
-        this.paths[i][i] = 0;
+        map.paths[i][i] = 0;
 
         do
         {
           curIdx = openSet.pop();
 
           // Put all adjacent links in the open set and calculate distance
-          for (let link of this.cells[curIdx].links)
+          for (let link of map.cells[curIdx].links)
           {
             link = parseInt(link);
 
             if (closedSet.indexOf(link) > -1) continue;
 
-            if (this.paths[i][link] == undefined)
+            if (map.paths[i][link] == undefined)
             {
-              this.paths[i][link] = this.paths[i][curIdx] + 1;
+              map.paths[i][link] = map.paths[i][curIdx] + 1;
             }
 
             closedSet.push(curIdx);
@@ -487,27 +512,27 @@ function printMapCode()
       }
     }
 
-    linkCells(from, to)
+    static linkCells(map, from, to)
     {
-      if (this.cells[from].links.indexOf(to) > -1) return;
+      if (map.cells[from].links.indexOf(to) > -1) return;
 
-      this.cells[from].links.push(to);
+      map.cells[from].links.push(to);
     }
 
-    setCellVisibilityByTag(tag, visibility)
+    static setCellVisibilityByTag(map, tag, visibility)
     {
-      for (var cell of this.cells)
+      for (var cell of map.cells)
       {
-        if (cell.hasTag(tag))
+        if (MapCell.hasTag(cell, tag))
         {
           cell.visible = visibility;
         }
       }
     }
 
-    setCellVisibilityByName(name, visibility)
+    static setCellVisibilityByName(map, name, visibility)
     {
-      for (var cell of this.cells)
+      for (var cell of map.cells)
       {
         if (cell.name == name)
         {
@@ -517,59 +542,59 @@ function printMapCode()
       }
     }
 
-    setCellHiddenByTag(tag, hidden)
+    static setCellHiddenByTag(map, tag, hidden)
     {
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
-        if (cell.hasTag(tag))
+        if (MapCell.hasTag(cell, tag))
         {
           cell.hidden = hidden;
         }
       }
     }
 
-    setCellVisibilityAll(visibility)
+    static setCellVisibilityAll(map, visibility)
     {
-      for (var cell of this.cells)
+      for (var cell of map.cells)
       {
         cell.visible = visibility;
       }
     }
 
-    setCellHiddenAll(hidden)
+    static setCellHiddenAll(map, hidden)
     {
-      for (var cell of this.cells)
+      for (var cell of map.cells)
       {
         cell.hidden = hidden;
       }
     }
 
     // style function accepts a context and modifies the stroke and line width of the context for the purpose of rendering the next cell
-    render(ctx, width, height)
+    static render(map, ctx, width, height)
     {
       //  Translate to centre of screen
       // Render each cell and it's half-connections if they're in range of the map centre and width
 
-      for (let cell of this.cells)
+      for (let cell of map.cells)
       {
         ctx.save();
         {
-          ctx.translate(width / 2 - this.centre.x, height / 2 - this.centre.y);
+          ctx.translate(width / 2 - map.centre.x, height / 2 - map.centre.y);
 
           ctx.save();
           {
-            this.renderCell(ctx, cell);
+            MiniMap.renderCell(map, ctx, cell);
           }
           ctx.restore();
           // Render cell connections
           for (let conIdx of cell.links)
           {
-            let con = this.cells[conIdx];
+            let con = map.cells[conIdx];
             if (!con) continue;
 
             ctx.save();
             {
-              this.renderPath(ctx, cell, con);
+              MiniMap.renderPath(map, ctx, cell, con);
             }
             ctx.restore();
           }
@@ -578,11 +603,11 @@ function printMapCode()
       }
     }
 
-    renderCell(ctx, cell)
+    static renderCell(map, ctx, cell)
     {
-      if (this.customRenderCell)
+      if (map.customRenderCell)
       {
-        this.customRenderCell(ctx, cell);
+        map.customRenderCell(ctx, cell);
         return;
       }
 
@@ -606,7 +631,7 @@ function printMapCode()
       ctx.restore();
 
 
-      if (cell.hasTag('goal'))
+      if (MapCell.hasTag(cell, 'goal'))
       {
         ctx.save();
         ctx.beginPath();
@@ -620,11 +645,11 @@ function printMapCode()
       }
     }
 
-    renderPath(ctx, fromCell, toCell)
+    static renderPath(map, ctx, fromCell, toCell)
     {
-      if (this.customRenderPath)
+      if (map.customRenderPath)
       {
-        this.customRenderPath(ctx, fromCell, toCell);
+        map.customRenderPath(ctx, fromCell, toCell);
         return;
       }
 
@@ -659,15 +684,15 @@ function printMapCode()
     let can = document.getElementById('canvas');
 
     let map = State.variables.map;
-    map.centreCellWithName(State.variables.mapName);
+    MiniMap.centreCellWithName(map, State.variables.mapName);
 
     if (!can) return;
     let ctx = can.getContext('2d');
 
-	ctx.fillStyle = 'white';
-	ctx.fillRect(0, 0, can.width, can.height);
+  	ctx.fillStyle = 'white';
+  	ctx.fillRect(0, 0, can.width, can.height);
 
-    map.render(ctx, can.width, can.height);
+    MiniMap.render(map, ctx, can.width, can.height);
   }`;
 
   return output;
@@ -675,10 +700,97 @@ function printMapCode()
 
 function printEventCode()
 {
-  let output = `window.GetEventsForScene = () =>
-  {
-    return 'Event';
-  }`;
+  let output = `function EventHint(description)
+{
+	return {
+		success: false,
+		description: description,
+		showMessage: (description ? true : false)
+	};
+}
+
+function EventPassage(passageName, description)
+{
+	return {
+		success: true,
+		passageName: passageName,
+		description: description
+	};
+}
+
+window.EventHint = EventHint;
+window.EventPassage = EventPassage;
+
+class StoryEvent
+{
+	constructor(name, scenes = [], criteriaFunction, priority = 0)
+	{
+		this.name = name;
+		// Note: Scenes are separate from criteria function for filtering  / performance purposes
+		// TODO: Create map of scenes with all applicable events on load
+		this.scenes = scenes;
+
+		// TODO: Criteria objects like MSON?
+		// Criteria function returns a CriteriaResult detailing if the criteria was met and either the passage name or a message
+		this.criteriaFunction = criteriaFunction;
+		this.priority = priority;
+	}
+
+	hasScene(scene)
+	{
+		return this.scenes.indexOf(scene) >= 0;
+	}
+};
+
+window.StoryEvent = StoryEvent;
+
+State.variables.eventHasScene = (event, scene) =>
+{
+		return event.scenes.indexOf(scene) >= 0;
+	}
+
+State.variables.events = [];
+
+function GetEventsForScene(scene)
+{
+	let priority = 0;
+	let output = '';
+	for (let event of State.variables.events)
+	{
+		if (State.variables.eventHasScene(event, scene))
+		{
+			console.log(event);
+			let passage = event.criteriaFunction(scene);
+			if (!passage) continue;
+
+			if (event.priority > priority)
+			{
+				// Remove lower-priority events
+				output = '';
+				priority = event.priority;
+			}
+			else if (event.priority < priority) continue;
+
+			if (passage.success)
+			{
+				output += '[[' + passage.description + '|' + passage.passageName + ']]\\n';
+			}
+			else if (passage.showMessage)
+			{
+				output += passage.description + '\\n';
+			}
+		}
+	}
+
+	if (!output)
+	{
+		output = 'No Events';
+	}
+
+	return output;
+}
+
+window.GetEventsForScene = GetEventsForScene;`;
 
   return output;
 }
@@ -733,6 +845,7 @@ function SaveToLocalStorage()
     exportSettings: {
       includeEvents: document.getElementById('includeEvents').checked,
       includeMap: document.getElementById('includeMap').checked,
+      includeEventNavigation: document.getElementById('includeEventNavigation').checked,
       includeMapReveal: document.getElementById('includeMapReveal').checked
     }
   });
