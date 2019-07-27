@@ -215,7 +215,8 @@ ${includeMap ? '<<script>>RenderMap();<</script>>' : ''}\n\n`;
 
   for (let cell of map.cells)
   {
-    output += `:: ${cell.name} [ ${cell.tags.toString()} ]
+    let _cellName = cell.name.replace(/\s/g, '_');
+    output += `:: ${_cellName} [ ${cell.tags.toString()} ]
 ${includeMap ? '<<set $mapName to "' + cell.name + '">>' : ''}
 ${includeMapReveal ? '<<print MiniMap.setCellVisibilityByName($map, "' + cell.name + '", true)>>' : ''}
 
@@ -225,11 +226,12 @@ ${cell.flavourText || ''}\n\n`;
 
     if (!includeEventNavigation)
     {
+      let _linkName = cell.name.replace(/\s/g, '_');
       for (let linkIdx of cell.links)
       {
         let link = map.cells[linkIdx];
 
-        output += `[[${link.name}]]\n`;
+        output += `[[${link.name}|${_linkName}]]\n`;
       }
 
       output += '\n\n';
@@ -244,6 +246,7 @@ ${cell.flavourText || ''}\n\n`;
 State.variables.events = State.variables.events || [];\n\n`;
     for (let cell of map.cells)
     {
+      let _cellName = cell.name.replace(/\s/g, '_');
       /*output += `State.variables.events.push(new StoryEvent("${cell.name} Navigation",
     [${ cell.links.map((x) => `"${map.cells[x].name}"`).join(', ') }],
     (scene) =>
@@ -256,7 +259,7 @@ State.variables.events = State.variables.events || [];\n\n`;
     [${ map.cells.filter((x) => x.links.indexOf(idx) > -1).map((x) => `"${x.name}"`).join(', ') }],
     (scene) =>
     {
-      return EventPassage('${cell.name}', '${cell.name}');
+      return EventPassage('${_cellName}', '${cell.name}');
     }));\n\n`;
     }
   }
@@ -723,7 +726,7 @@ function EventInclude(description)
 {
 	return {
 		success: false,
-		description: "<<include \"" + description + "\">>",
+		description: "<<include \\\"" + description + "\\\">>",
 		showMessage: (description ? true : false)
 	};
 }
