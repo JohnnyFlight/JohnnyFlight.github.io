@@ -719,6 +719,15 @@ function printEventCode()
 	};
 }
 
+function EventInclude(description)
+{
+	return {
+		success: false,
+		description: "<<include \"" + description + "\">>",
+		showMessage: (description ? true : false)
+	};
+}
+
 function EventPassage(passageName, description)
 {
 	return {
@@ -730,6 +739,7 @@ function EventPassage(passageName, description)
 
 window.EventHint = EventHint;
 window.EventPassage = EventPassage;
+window.EventInclude = EventInclude;
 
 class StoryEvent
 {
