@@ -220,7 +220,7 @@ ${includeMap ? '<<script>>RenderMap();<</script>>' : ''}\n\n`;
 ${includeMap ? '<<set $mapName to "' + cell.name + '">>' : ''}
 ${includeMapReveal ? '<<print MiniMap.setCellVisibilityByName($map, "' + cell.name + '", true)>>' : ''}
 
-${includeEvents ? '<<print GetEventsForScene("' + cell.name + '")>>' : ''}
+${includeEvents ? '<<print GetEventsForScene("' + _cellName + '")>>' : ''}
 
 ${cell.flavourText || ''}\n\n`;
 
@@ -256,7 +256,7 @@ State.variables.events = State.variables.events || [];\n\n`;
     let idx = parseInt(MiniMap.getCellIndexByName(map, cell.name));
     console.log(idx);
       output += `State.variables.events.push(new StoryEvent("${cell.name} Navigation",
-    [${ map.cells.filter((x) => x.links.indexOf(idx) > -1).map((x) => `"${x.name}"`).join(', ') }],
+    [${ map.cells.filter((x) => x.links.indexOf(idx) > -1).map((x) => `"${x.name.replace(/\s/g, '_')}"`).join(', ') }],
     (scene) =>
     {
       return EventPassage('${_cellName}', '${cell.name}');
@@ -769,7 +769,7 @@ window.StoryEvent = StoryEvent;
 
 State.variables.eventHasScene = (event, scene) =>
 {
-		return event.scenes.indexOf(scene) >= 0;
+		return event.scenes.indexOf(scene) > -1 || event.scenes.indexOf('all') > -1;
 	}
 
 State.variables.events = [];
