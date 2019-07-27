@@ -900,7 +900,7 @@ function MapClick(evt)
     case EditorState_LinkCell:
       if (selectedCellIdx < 0 || selectedCellIdx == idx) break;
 
-      map.linkCells(selectedCellIdx, idx);
+      MiniMap.linkCells(map, selectedCellIdx, idx);
       if (!(document.getElementById('oneWayLink').checked))
         MiniMap.linkCells(map, idx, selectedCellIdx);
 
