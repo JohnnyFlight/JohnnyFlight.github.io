@@ -202,6 +202,9 @@ ${printMapCode()}
 ${MiniMap.generateInitCode(map, includeMapReveal)}
 
 State.variables.map = map;
+
+// Allows user to include their own init function without modifying the exported code
+if (window.StoryInit) StoryInit();
 <</script>>
 
 :: PassageDone
@@ -238,12 +241,19 @@ ${cell.flavourText || ''}\n\n`;
     output += `:: EventNavigation [ script ]
     ${printEventCode()}
 
-    alert();
 State.variables.events = State.variables.events || [];\n\n`;
     for (let cell of map.cells)
     {
-      output += `State.variables.events.push(new StoryEvent("${cell.name} Navigation",
+      /*output += `State.variables.events.push(new StoryEvent("${cell.name} Navigation",
     [${ cell.links.map((x) => `"${map.cells[x].name}"`).join(', ') }],
+    (scene) =>
+    {
+      return EventPassage('${cell.name}', '${cell.name}');
+    }));\n\n`;*/
+    let idx = parseInt(MiniMap.getCellIndexByName(map, cell.name));
+    console.log(idx);
+      output += `State.variables.events.push(new StoryEvent("${cell.name} Navigation",
+    [${ map.cells.filter((x) => x.links.indexOf(idx) > -1).map((x) => `"${x.name}"`).join(', ') }],
     (scene) =>
     {
       return EventPassage('${cell.name}', '${cell.name}');
@@ -874,6 +884,13 @@ function LoadFromLocalStorage()
   for (let cell in map.cells)
   {
     map.cells[cell] = Object.assign(new MapCell(), map.cells[cell]);
+
+    // This is a fudge because I cba to sort out the string links thing
+    for (let link in map.cells[cell].links)
+    {
+      // Turns links into a set to make unique
+      map.cells[cell].links = Array.from(new Set(map.cells[cell].links.map((x) => parseInt(x))));
+    }
   }
 }
 

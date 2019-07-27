@@ -156,7 +156,7 @@ class MiniMap
     for (let cell in map.cells)
     {
       if (MapCell.isPointInCell(map.cells[cell], x, y))
-        return cell;
+        return parseInt(cell);
     }
 
     return -1;
