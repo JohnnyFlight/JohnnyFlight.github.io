@@ -208,6 +208,10 @@ if (window.StoryInit) StoryInit();
 <</script>>
 
 :: PassageDone
+<<script>>if (window.PassageDone) PassageDone();<</script>>
+
+:: PassageReady
+<<script>>if (window.PassageReady) PassageReady();<</script>>
 
 :: StoryCaption
 ${includeMap ? '<canvas id="canvas" width="200" height="200"></canvas>' : ''}
@@ -361,6 +365,7 @@ function printMapCode()
       this.cells = [];
 
       this.paths = [];
+      this.scale = { x: 1, y: 1 };
     }
 
     static getCellByName(map, name)
@@ -705,7 +710,11 @@ function printMapCode()
   	ctx.fillStyle = 'white';
   	ctx.fillRect(0, 0, can.width, can.height);
 
-    MiniMap.render(map, ctx, can.width, can.height);
+    ctx.save();
+    ctx.scale(map.scale.x, map.scale.y);
+    console.log(ctx);
+    MiniMap.render(map, ctx, can.width * (1 / map.scale.x), can.height * (1 / map.scale.y));
+    ctx.restore();
   }`;
 
   return output;
@@ -928,7 +937,7 @@ function MapClick(evt)
       printCell(map.cells[selectedCellIdx]);
       break;
     case EditorState_LinkCell:
-      if (selectedCellIdx < 0 || selectedCellIdx == idx) break;
+      if (selectedCellIdx < 0 || selectedCellIdx == idx || idx < 0) break;
 
       MiniMap.linkCells(map, selectedCellIdx, idx);
       if (!(document.getElementById('oneWayLink').checked))
