@@ -1,12 +1,38 @@
 let frameTime = 0;
 
-let objects = [];
+let particles = [];
+let polygons = [];
 let spawnCounter = 0;
 let spawnTime = 1;
 let arms = 5;
 let particleRadiusVelocity = 5;
 let particleAngleVelocity = 5;
 let despawnRadius;
+
+class PolarPolygon
+{
+  constructor(topLeft, bottomRight)
+  {
+    this.topLeft = topLeft;
+    this.bottomRight = bottomRight;
+  }
+
+  static Update(polygon, deltaTime)
+  {
+    PolarParticle.Update(polygon.topLeft, deltaTime);
+    PolarParticle.Update(polygon.bottomRight, deltaTime);
+  }
+
+  static TopRight(polygon)
+  {
+    return new PolarParticle(polygon.topLeft.radius, polygon.bottomRight.angle);
+  }
+
+  static BottomLeft(polygon)
+  {
+    return new PolarParticle(polygon.bottomRight.radius, polygon.topLeft.angle);
+  }
+}
 
 class PolarParticle
 {
@@ -52,8 +78,10 @@ function SpawnLayer(radiusOffset = 0, angleOffset = 0)
 {
   for (let j = 0; j < arms; ++j)
   {
-    objects.push(new PolarParticle(radiusOffset, angleOffset + j * (360 / arms), particleRadiusVelocity, particleAngleVelocity));
+    particles.push(new PolarParticle(radiusOffset, angleOffset + j * (360 / arms), particleRadiusVelocity, particleAngleVelocity));
   }
+
+  polygons.push(new PolarPolygon(new PolarParticle(5, 5, 5, 5), new PolarParticle(30, 30, 5, 5)));
 }
 
 function init()
@@ -62,7 +90,7 @@ function init()
   {
     for (let j = 0; j < arms; ++j)
     {
-      SpawnLayer(i * particleRadiusVelocity, i * particleAngleVelocity);
+      //SpawnLayer(i * particleRadiusVelocity, i * particleAngleVelocity);
     }
   }
 
@@ -98,14 +126,20 @@ function update(deltaTime)
     SpawnLayer();
   }
 
-  objects = objects.filter((x) => x.radius < despawnRadius);
+  particles = particles.filter((x) => x.radius < despawnRadius);
 
-  for (o of objects)
+  for (o of particles)
   {
     PolarParticle.Update(o, deltaTime);
   }
 
-  state.objects = objects;
+  for (p of polygons)
+  {
+    PolarPolygon.Update(p, deltaTime);
+  }
+
+  state.particles = particles;
+  state.polygons = polygons;
 
   return state;
 }
@@ -120,11 +154,30 @@ function draw(state)
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
 
-    for (o of state.objects)
+    for (o of state.particles)
     {
       let pos = PolarParticle.PolarToCartesian(o);
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    for (p of state.polygons)
+    {
+      let topLeft = PolarParticle.PolarToCartesian(p.topLeft);
+      let bottomRight = PolarParticle.PolarToCartesian(p.bottomRight);
+
+      let topRight = PolarParticle.PolarToCartesian(PolarPolygon.TopRight(p));
+      let bottomLeft = PolarParticle.PolarToCartesian(PolarPolygon.BottomLeft(p));
+
+      ctx.beginPath();
+      ctx.moveTo(topLeft.x, topLeft.y);
+      ctx.lineTo(topRight.x, topRight.y);
+      ctx.lineTo(bottomRight.x, bottomRight.y);
+      ctx.lineTo(bottomLeft.x, bottomLeft.y);
+      ctx.lineTo(topLeft.x, topLeft.y);
+
       ctx.fill();
       ctx.closePath();
     }
