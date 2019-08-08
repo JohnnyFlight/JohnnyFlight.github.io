@@ -221,7 +221,7 @@ ${includeMap ? '<<script>>RenderMap();<</script>>' : ''}\n\n`;
   {
     let _cellName = cell.name.replace(/\s/g, '_');
     output += `:: ${_cellName} [ ${cell.tags.toString()} ]
-${includeMap ? '<<set $mapName to "' + cell.name + '">>' : ''}
+${includeMap ? '<<run UpdateMap("' + cell.name + '")>>' : ''}
 ${includeMapReveal ? '<<print MiniMap.setCellVisibilityByName($map, "' + cell.name + '", true)>>' : ''}
 
 ${includeEvents ? '<<print GetEventsForScene("' + _cellName + '")>>' : ''}
@@ -715,6 +715,12 @@ function printMapCode()
     console.log(ctx);
     MiniMap.render(map, ctx, can.width * (1 / map.scale.x), can.height * (1 / map.scale.y));
     ctx.restore();
+  }
+
+  window.UpdateMap = (mapName) =>
+  {
+    State.variables.lastMap = State.variables.mapName;
+    State.variables.mapName = mapName;
   }`;
 
   return output;
@@ -722,30 +728,34 @@ function printMapCode()
 
 function printEventCode()
 {
-  let output = `function EventHint(description)
+  let output = `
+function EventHint(description, priority)
 {
 	return {
 		success: false,
 		description: description,
-		showMessage: (description ? true : false)
+		showMessage: (description ? true : false),
+    priority: priority
 	};
 }
 
-function EventInclude(description)
+function EventInclude(description, priority = 0)
 {
 	return {
 		success: false,
 		description: "<<include \\\"" + description + "\\\">>",
-		showMessage: (description ? true : false)
+		showMessage: (description ? true : false),
+    priority: priority
 	};
 }
 
-function EventPassage(passageName, description)
+function EventPassage(passageName, description, priority = 0)
 {
 	return {
 		success: true,
 		passageName: passageName,
-		description: description
+		description: description,
+    priority: priority = 0
 	};
 }
 
@@ -795,13 +805,15 @@ function GetEventsForScene(scene)
 			let passage = event.criteriaFunction(scene);
 			if (!passage) continue;
 
-			if (event.priority > priority)
+      let passagePriority = passage.priority || event.priority;
+
+			if (passagePriority > priority)
 			{
 				// Remove lower-priority events
 				output = '';
 				priority = event.priority;
 			}
-			else if (event.priority < priority) continue;
+			else if (passagePriority < priority) continue;
 
 			if (passage.success)
 			{
