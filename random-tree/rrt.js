@@ -2,12 +2,14 @@ const ARM_LENGTH = 50;
 
 class RRTNode
 {
-  constructor(position = new Vector2(0, 0), angle = 0, range = Math.PI / 2, distance = ARM_LENGTH)
+  constructor(position = new Vector2(0, 0), angle = 0, range = Math.PI / 2, distance = ARM_LENGTH, time = 0)
   {
     this.position = position;
     this.angle = angle;
     this.range = range;
     this.distance = distance;
+
+    this.time = time;
   }
 
   static AngleVector(node)

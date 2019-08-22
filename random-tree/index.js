@@ -2,8 +2,19 @@ let frameTime = 0;
 
 let startNodes = [];
 let goalNodes = [];
+let walls = [];
+let maxAttempts = 2000;
+let maxResets = 50;
+let resetCounter = 0;
 
-let range = Math.PI / 6;
+// If a node is this close to another node then reject
+let distanceLimit = 30;
+
+let goalTime = Infinity;
+let goalNodeCount = Infinity;
+let velocity = 10;
+
+let range = Math.PI / 1;
 let distance = 100;
 
 window.onload = () => {
@@ -22,7 +33,11 @@ function init()
   startNodes.push(new RRTNode(new Vector2(100, 100), Math.PI / 4, range, distance));
   goalNodes.push(new RRTNode(new Vector2(700, 500), Math.PI / 4, range, distance));
 
+  walls.push(new Line(new Vector2(0, 200), new Vector2(300, 200)));
+  walls.push(new Line(new Vector2(800, 400), new Vector2(300, 400)));
+
   document.getElementById('tick').onclick = run;
+  document.getElementById('reset').onclick = reset;
 }
 
 function run()
@@ -34,9 +49,32 @@ function run()
 
   frameTime = (new Date()).getTime();
 
-  if (state.end) return;
+  if (startNodes.length > goalNodeCount * 2)
+  {
+    resetCounter++;
+    if (resetCounter >= maxResets)
+    {
+      console.log('Failed to find path after', maxResets, 'resets');
+      state.end = true;
+    }
+    else
+    {
+      reset();
+    }
+  }
+
+  if (state.end)
+  {
+    //draw(state);
+    return;
+  }
 
   requestAnimationFrame(run);
+}
+
+function reset()
+{
+  startNodes = [startNodes[0]];
 }
 
 function update(deltaTime)
@@ -48,73 +86,115 @@ function update(deltaTime)
     stageHeight : canvas.height
   };
 
+  state.walls = walls;
+
   // Generate a random point
   let inStart = false;
   let inGoal = false;
 
   let done = false;
+
+  let sortedNodes = startNodes.slice().sort((x) => x.time);
+
+  let attemptCounter = 0;
   while (!done)
   {
     let pos = new Vector2(Math.random() * state.stageWidth, Math.random() * state.stageHeight);
 
-    // Is point in range of anything in start tree?
-    for (let p of startNodes)
+    if (IsNodeCloseToOtherNodes(pos))
     {
-      let dir = Vector2.Subtract(pos, p.position);
-      if (Vector2.AngleBetween(RRTNode.AngleVector(p), dir) < p.range / 2 && Vector2.Length(dir) < p.distance)
+      attemptCounter++;
+      if (attemptCounter >= maxAttempts)
       {
-        startNodes.push(new RRTNode(pos, Vector2.Angle(dir), range, distance));
-        done = true;
-        inStart = true;
-        //console.log(startNodes[startNodes.length - 1], 'is in start set');
+        console.log('Failed to find a new node after', maxAttempts, 'attempts');
+        state.end = true;
         break;
       }
+      continue;
     }
 
-    // Is anything in goal tree in range of point?
-    for (let p of goalNodes)
+    // Is point in range of anything in start tree?
+    for (let p of sortedNodes)
     {
-      let dir = Vector2.Subtract(p.position, pos);
-      // TODO: Line of Sight check
+      let dir = Vector2.Subtract(pos, p.position);
+      if (Vector2.AngleBetween(RRTNode.AngleVector(p), dir) < p.range / 2) //  && Vector2.Length(dir) < p.distance)
+      {
+        // Check wall intersections
+        if (DoesPathIntersectWalls(pos, p.position)) continue;
 
-      // If in start set use existing node
-      if (inStart)
-      {
-        let lastNode = startNodes[startNodes.length - 1];
-        if (Vector2.AngleBetween(RRTNode.AngleVector(lastNode), dir) < lastNode.range / 2 && Vector2.Length(dir) < lastNode.distance)
-        {
-          goalNodes.push(lastNode);
-          done = true;
-          inGoal = true;
-          //console.log(goalNodes[goalNodes.length - 1], 'is also in goal set');
-          break;
+        let length = Vector2.Length(dir);
+        if (p.time + length / velocity > goalTime) {
+          //console.log('Point rejected for taking too long');
+          continue;
         }
-      }
-      else
-      {
-        // Otherwise just use straight line check
-        if (Vector2.Length(dir) < distance && Vector2.AngleBetween(Vector2.Subtract(p.position, pos), RRTNode.AngleVector(p)) < range / 2)
+
+        if (length > p.distance)
         {
-          goalNodes.push(new RRTNode(pos, Vector2.Angle(dir), range, distance));
-          done = true;
-          inGoal = true;
-          //console.log(goalNodes[goalNodes.length - 1], 'is in goal set');
-          break;
+          p.distance = length;
         }
+
+        let node = new RRTNode(pos, Vector2.Angle(dir), range, distance, p.time + length / velocity);
+
+        startNodes.push(node);
+        done = true;
+        inStart = true;
+        // Check if point can also see goal node
+        dir = Vector2.Subtract(goalNodes[0].position, pos);
+        if (Vector2.AngleBetween(RRTNode.AngleVector(node), dir) < node.range / 2)// && Vector2.Length(dir) < node.distance)
+        {
+          if (!DoesPathIntersectWalls(pos, goalNodes[0].position))
+          {
+            if (node.time + Vector2.Length(dir) / velocity <= goalTime)
+            {
+              node.distance = Vector2.Length(dir);
+              goalNodes[0].time = node.time + node.distance / velocity;
+
+              resetCounter = 0;
+              inGoal = true;
+              break;
+            }
+          }
+        }
+        break;
       }
     }
   }
 
   if (inGoal && inStart)
   {
-    console.log('Graph complete with', startNodes.length, 'in start set and', goalNodes.length, 'nodes in goal set');
     state.end = true;
+    goalNodeCount = startNodes.length;
+    goalTime = goalNodes[0].time;
+    console.log('Graph complete with', startNodes.length, 'in start set and', goalNodes.length, 'nodes in goal set.');
+    console.log('Path time is', goalTime, 'seconds');
   }
 
   state.startNodes = startNodes;
   state.goalNodes = goalNodes;
 
   return state;
+}
+
+function DoesPathIntersectWalls(from, to)
+{
+  for (let wall of walls)
+  {
+    if (wall.intersects(new Line(from, to)))
+      return true;
+  }
+
+  return false;
+}
+
+function IsNodeCloseToOtherNodes(point)
+{
+  for (let i of startNodes)
+  {
+    if (Vector2.LengthSq(Vector2.Subtract(point, i.position)) < distanceLimit * distanceLimit)
+      return true;
+  }
+
+  return false;
 }
 
 function draw(state)
@@ -137,7 +217,18 @@ function draw(state)
     {
       ctx.save();
       {
+        ctx.strokeStyle = 'green';
         RRTNode.Render(ctx, node);
+      }
+      ctx.restore();
+    }
+
+    for (let line of state.walls)
+    {
+      ctx.save();
+      {
+        ctx.strokeStyle = 'red';
+        line.draw(ctx);
       }
       ctx.restore();
     }
