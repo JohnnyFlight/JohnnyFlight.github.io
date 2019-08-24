@@ -5,6 +5,7 @@ var renderer;
 var geometry;
 var material;
 var cubes = [];
+var sun;
 var totalTime = 0;
 function OnWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -32,6 +33,9 @@ function init() {
     window.onresize = OnWindowResize;
     geometry = new THREE.PlaneGeometry(5, 5, 32, 32);
     material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, wireframe: true, vertexColors: THREE.VertexColors });
+    sun = new THREE.DirectionalLight();
+    sun.lookAt = new THREE.Vector3(0, 0, -1);
+    scene.add(sun);
     //  Assign vertex colours
     for (var _i = 0, _a = geometry.faces; _i < _a.length; _i++) {
         var f = _a[_i];
@@ -45,6 +49,10 @@ function init() {
         scene.add(cube);
     }
     ChangeSettings();
+    var loader = new THREE.GLTFLoader();
+    loader.load('ship.gltf', function (gltf) {
+        scene.add(gltf.scene);
+    }, undefined, function (x) { return console.log(x); });
 }
 function run() {
     var deltaTime = ((new Date()).getTime() - frameTime) / 1000;

@@ -6,6 +6,7 @@ let renderer;
 let geometry;
 let material;
 let cubes = [];
+let sun;
 
 let totalTime = 0;
 
@@ -49,6 +50,12 @@ function init() : void
   geometry = new THREE.PlaneGeometry(5, 5, 32, 32);
   material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, wireframe: true, vertexColors: THREE.VertexColors });
 
+  sun = new THREE.DirectionalLight();
+  sun.position = new THREE.Vector3(0, 0, -5);
+  sun.lookAt = new THREE.Vector3(0, 0, -1);
+
+  scene.add(sun);
+
   //  Assign vertex colours
   for (let f of geometry.faces)
   {
@@ -65,6 +72,13 @@ function init() : void
   }
 
   ChangeSettings();
+
+  let loader = new THREE.GLTFLoader();
+
+  loader.load('ship.gltf',
+    (gltf) => {
+      scene.add(gltf.scene);
+    }, undefined, (x) => console.log(x));
 }
 
 function run()
