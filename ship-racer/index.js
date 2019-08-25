@@ -14,6 +14,9 @@ let ship;
 let velocity = -1;
 let angularVelocity = -0.1;
 
+let turn = 0;
+let move = 0;
+
 let goal;
 
 let totalTime = 0;
@@ -23,6 +26,27 @@ function OnWindowResize()
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function OnKeyDown(e)
+{
+  turn = 0;
+  move = 0;
+
+  switch (e.key)
+  {
+    case 'a':
+      turn = -1;
+      break;
+    case 'd':
+      turn = 1;
+      break;
+    case 'w':
+      move = 1;
+      break;
+  }
+
+  console.log(e);
 }
 
 function ChangeSettings(evt)
@@ -56,6 +80,7 @@ function SetupScene()
 
   document.body.appendChild(renderer.domElement);
   window.onresize = OnWindowResize;
+  window.onkeydown = OnKeyDown;
 
   material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, wireframe: true, vertexColors: THREE.VertexColors });
 
@@ -120,6 +145,11 @@ function update(deltaTime)
 
   if (ship)
   {
+    ship.physics.velocity.x = Math.cos(ship.physics.rotation) * velocity * move;
+    ship.physics.velocity.y = Math.sin(ship.physics.rotation) * velocity * move;
+
+    ship.physics.angularVelocity = angularVelocity * turn;
+
     ship.Update(deltaTime);
 
     let temp = (new THREE.Vector3).setFromMatrixPosition(goal.matrixWorld);
