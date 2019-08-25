@@ -3,9 +3,16 @@ var scene;
 var camera;
 var renderer;
 var geometry;
+var shipGeometry;
+var shipModel;
+var shipLoaded = false;
 var material;
 var cubes = [];
 var sun;
+var ship;
+var velocity = -1;
+var angularVelocity = -0.1;
+var goal;
 var totalTime = 0;
 function OnWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -21,49 +28,61 @@ window.onload = function () {
     init();
     requestAnimationFrame(run);
 };
-function init() {
+function SetupScene() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.rotation.x = Math.PI / 4;
     camera.position.y = -5;
     camera.position.z = 5;
+    camera.up.set(0, 0, 1);
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     window.onresize = OnWindowResize;
-    geometry = new THREE.PlaneGeometry(5, 5, 32, 32);
     material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, wireframe: true, vertexColors: THREE.VertexColors });
-    sun = new THREE.DirectionalLight();
-    sun.lookAt = new THREE.Vector3(0, 0, -1);
-    scene.add(sun);
-    //  Assign vertex colours
-    for (var _i = 0, _a = geometry.faces; _i < _a.length; _i++) {
-        var f = _a[_i];
-        f.vertexColors[0] = new THREE.Color(0xFFFFFF);
-        f.vertexColors[1] = new THREE.Color(0xFFFFFF);
-        f.vertexColors[2] = new THREE.Color(0xFFFFFF);
-    }
-    for (var i = 0; i < 1; ++i) {
-        var cube = new THREE.Mesh(geometry, material);
-        cubes.push(cube);
-        scene.add(cube);
-    }
-    ChangeSettings();
+    scene.add(new THREE.DirectionalLight());
+    sun = scene.children[scene.children.length - 1];
+    sun.position.copy(new THREE.Vector3(0, 0, 100));
+    sun.lookAt = new THREE.Vector3(0, 0, 0);
+    scene.add(new THREE.AxesHelper(5, 10));
+}
+function LoadAssets() {
     var loader = new THREE.GLTFLoader();
     loader.load('ship.gltf', function (gltf) {
-        scene.add(gltf.scene);
+        console.log(gltf);
+        shipModel = gltf.scene.children[0];
+        shipGeometry = shipModel.geometry;
+        ship = new Ship(shipModel);
+        goal = new THREE.Object3D;
+        shipModel.add(goal);
+        goal.position.set(10, 0, 10);
     }, undefined, function (x) { return console.log(x); });
+}
+function init() {
+    SetupScene();
+    LoadAssets();
+    ChangeSettings();
 }
 function run() {
     var deltaTime = ((new Date()).getTime() - frameTime) / 1000;
     frameTime = (new Date()).getTime();
     var state = update(deltaTime);
+    if (shipModel && !shipLoaded) {
+        shipLoaded = true;
+        scene.add(shipModel);
+    }
     draw(state);
     requestAnimationFrame(run);
 }
 function update(deltaTime) {
     totalTime += deltaTime;
     var state = {};
+    if (ship) {
+        ship.Update(deltaTime);
+        var temp = (new THREE.Vector3).setFromMatrixPosition(goal.matrixWorld);
+        camera.position.lerp(temp, 0.2);
+        camera.lookAt(shipModel.position);
+    }
     return state;
 }
 function draw(state) {
