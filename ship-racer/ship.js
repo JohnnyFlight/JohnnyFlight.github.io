@@ -5,8 +5,6 @@ class Ship
     this.model = model;
     this.physics = new PhysicsObject();
     this.physics.gravity = 0;
-
-    this.physics.angularVelocity = 0.1;
   }
 
   Update(deltaTime)
