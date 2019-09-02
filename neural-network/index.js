@@ -1,6 +1,8 @@
+let network;
+
 window.onload = () =>
 {
-  let network = new MultiLayerPerceptron([3, 4, 5]);
+  network = new MultiLayerPerceptron([3, 4, 5]);
   network.randomise();
 
   let canvas = document.getElementById('canvas');
@@ -40,7 +42,7 @@ function RenderNetwork(ctx, network)
         {
           let colour = 255 * network.layers[i][j].weights[k];
           ctx.strokeStyle = `rgb(${colour}, ${colour},${colour})`;
-          ctx.lineWidth = 5;
+          ctx.lineWidth = 3;
           // Previous node
           ctx.moveTo((i) * nodeSpace, (k + 1) * nodeSpace);
           // Current node
