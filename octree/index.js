@@ -23,6 +23,8 @@ let cameraLerp = 0.1;
 let octree;
 let octreeMeshes = [];
 
+let maxDepth = 5;
+
 let goal;
 let paused = false;
 let totalTime = 0;
@@ -90,6 +92,16 @@ function SetupScene()
 
   materials.wireframe = new THREE.MeshBasicMaterial({ wireframe: true });
 
+  materials.depth = [];
+
+  for (let i = 0; i <= maxDepth; ++i)
+  {
+    let colour = i * (0xFF / (maxDepth + 1));
+    colour = colour + colour * 255 + colour * 255 * 255;
+
+    materials.depth.push(new THREE.MeshBasicMaterial({ wireframe: false, color: new THREE.Color(i * (1 / maxDepth), 0, 0), transparent: true, opacity: (maxDepth - i + 1) * (1 / (maxDepth + 1)) }));
+  }
+
   scene.add(new THREE.DirectionalLight());
 
   sun = scene.children[scene.children.length-1];
@@ -114,7 +126,6 @@ function init()
   octree = new OctreeNode(new THREE.Vector3(0, 0, 0), new THREE.Vector3(5, 5, 5));
 
   let nodeExplorer = [octree];
-  let maxDepth = 5;
   let rad = 2.5;
 
   let sphere = new THREE.Sphere(new THREE.Vector3(), rad);
@@ -192,7 +203,7 @@ function rebuildOctree(octree)
     // Check if current node is solid
     if (node.solid)
     {
-      let mesh = new THREE.Mesh(geometries.cube, materials.wireframe);
+      let mesh = new THREE.Mesh(geometries.cube, materials.depth[node.depth]);
       mesh.scale.copy(node.size);
       mesh.position.copy(node.position);
       octreeMeshes.push(mesh);
@@ -212,6 +223,29 @@ function rebuildOctree(octree)
     // Pop end of explorer
     nodeExplorer.pop();
   }
+
+  /*let geometry = new THREE.Geometry();
+  let idx = 0;
+  let mats = [];
+
+  for (let mesh of octreeMeshes)
+  {
+    mesh.updateMatrix();
+    mesh.geometry.faces.forEach(function(face) {face.materialIndex = 0;});
+    mats.push(mesh.material);
+    geometry.merge(mesh.geometry, mesh.matrix, idx);
+    idx++;
+  }
+
+  geometries.octree = new THREE.BufferGeometry().fromGeometry(geometry, mats);
+
+  geometries.octree.groupNeedsUpdate = true;
+
+  octreeMeshes = [];
+  octreeMeshes.push(new THREE.Mesh(geometries.octree));
+  octreeMeshes[0].geometry.computeFaceNormals();
+  octreeMeshes[0].geometry.computeVertexNormals();
+  scene.add(octreeMeshes[0]);*/
 }
 
 function run()
