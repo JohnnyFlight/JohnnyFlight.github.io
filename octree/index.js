@@ -99,7 +99,7 @@ function SetupScene()
     let colour = i * (0xFF / (maxDepth + 1));
     colour = colour + colour * 255 + colour * 255 * 255;
 
-    materials.depth.push(new THREE.MeshBasicMaterial({ wireframe: false, color: new THREE.Color(i * (1 / maxDepth), 0, 0), transparent: true, opacity: (maxDepth - i + 1) * (1 / (maxDepth + 1)) }));
+    materials.depth.push(new THREE.MeshBasicMaterial({ wireframe: false, color: new THREE.Color(i * (1 / maxDepth), 0, 0), transparent: false, opacity: (maxDepth - i + 1) * (1 / (maxDepth + 1)) }));
   }
 
   scene.add(new THREE.DirectionalLight());
@@ -126,47 +126,16 @@ function init()
   octree = new OctreeNode(new THREE.Vector3(0, 0, 0), new THREE.Vector3(5, 5, 5));
 
   let nodeExplorer = [octree];
-  let rad = 2.5;
+  let rad = 3.5;
 
-  let sphere = new THREE.Sphere(new THREE.Vector3(), rad);
+  let sphere = new THREE.Sphere(new THREE.Vector3(2, 2, 2), rad);
+  octree.addSphere(sphere, maxDepth);
 
-  while (nodeExplorer.length)
-  {
-    let node = nodeExplorer[nodeExplorer.length - 1];
-    if (node.depth >= maxDepth)
-    {
-      nodeExplorer.pop();
-      continue;
-    }
-
-    // Check each position to see if position is in sphere
-    for (let i = 0; i < 8; ++i)
-    {
-      // This is me being lazy and not wanting to deal with the vector arithmetic
-      // Create all child octree nodes and remove them if they don't intersect
-      node.addNode(i % 2, Math.floor(i / 2) % 2, Math.floor(i / 4) % 2);
-      //if (node.nodes[i].position.distanceTo(new THREE.Vector3(0, 0, 0)) > rad)
-      let box = node.nodes[i].getBoundingBox();
-
-      // Check if box is completely within sphere
-      if (isBoxInsideSphere(box, sphere))
-      {
-        node.nodes[i].solidify();
-        continue;
-      }
-
-      if (!box.intersectsSphere(sphere))
-      {
-        node.nodes[i] = undefined;
-      }
-      else
-      {
-        nodeExplorer.unshift(node.nodes[i]);
-      }
-    }
-
-    nodeExplorer.pop();
-  }
+  sphere.center.x = -2;
+  sphere.center.y = -2;
+  sphere.center.z = -2;
+  console.log(sphere);
+  octree.addSphere(sphere, maxDepth);
 
   octree.prune();
 
