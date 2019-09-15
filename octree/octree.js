@@ -107,6 +107,75 @@ class OctreeNode
     return num;
   }
 
+  addSphere(sphere, maxDepth)
+  {
+    if (this.depth >= maxDepth) return;
+
+    let nodeExplorer = [this];
+
+    while (nodeExplorer.length)
+    {
+      let node = nodeExplorer[nodeExplorer.length - 1];
+      if (node.depth >= maxDepth)
+      {
+        nodeExplorer.pop();
+        continue;
+      }
+
+      let nodeBox = node.getBoundingBox();
+      if (!nodeBox.intersectsSphere(sphere))
+      {
+        nodeExplorer.pop();
+        continue;
+      }
+  
+      // Check each position to see if position is in sphere
+      for (let i = 0; i < 8; ++i)
+      {
+        // This is me being lazy and not wanting to deal with the vector arithmetic
+        // Create all child octree nodes and remove them if they don't intersect
+        let existed = false;
+
+        // Only create child node if it doesn't exist
+        if (!node.nodes[i])
+        {
+          node.addNode(i % 2, Math.floor(i / 2) % 2, Math.floor(i / 4) % 2);
+        }
+        else
+        {
+          if (node.nodes[i].solid) continue;
+          existed = true;
+        }
+
+        //if (node.nodes[i].position.distanceTo(new THREE.Vector3(0, 0, 0)) > rad)
+        let box = node.nodes[i].getBoundingBox();
+  
+        // Check if box is completely within sphere
+        if (isBoxInsideSphere(box, sphere))
+        {
+          //node.nodes[i].solidify();
+          node.nodes[i].solid = true;
+          continue;
+        }
+  
+        if (!box.intersectsSphere(sphere))
+        {
+          if (!existed)
+          {
+            console.log(node, i);
+            node.nodes[i] = undefined;
+          }
+        }
+        else
+        {
+          nodeExplorer.unshift(node.nodes[i]);
+        }
+      }
+  
+      nodeExplorer.pop();
+    }
+  }
+
   prune()
   {
     let allSolid = true;
