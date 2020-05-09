@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Learning Game</title>
+    <script src="index.js" type="text/javascript">
+    </script>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+    </style>
+  </head>
+  <body>
+    <h1>Learning Game</h1>
+    <p>This is just a simple game I made with the intention of using it to input into a reinforcement learning neural network</p>
+    <span>SCORE: <span id="score"></span></span>
+    <div id="grid" class="grid">
+    </div>
+    <h2>Rules</h2>
+    <ul>
+      <li>Enemies spawn every 5 turns</li>
+      <li>Powerups spawn every 7 turns</li>
+      <li>Powerups last for 2 turns (not including the turn you get it)</li>
+      <li>Collecting multiple powerups does not stack powerup time</li>
+      <li>Enemies move every 3 turns</li>
+      <li>Enemies destroy powerups they move through</li>
+      <li>Touch enemies with powerup to kill them</li>
+      <li>Touch enemies without powerup to die</li>
+    </ul>
+  </body>
+</html>
