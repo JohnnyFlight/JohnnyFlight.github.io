@@ -266,16 +266,22 @@ function CheckPlayerCollisions()
     }
   }
 
+  let canKill = (player.superTurns > 0);
+
   // Check enemies
   for (let e = 0; e < enemies.length; ++e)
   {
     let enemy = enemies[e];
     if (enemy.x == player.x && enemy.y == player.y)
     {
-      if (player.superTurns > 0)
+      if (canKill)
       {
+        // Destroy enemy
         enemies.splice(e, 1);
         e--;
+
+        // Remove super
+        player.superTurns = 0;
       }
       else {
         alert("dead. score " + turnCount);
