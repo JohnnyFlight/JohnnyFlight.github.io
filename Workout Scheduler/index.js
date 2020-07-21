@@ -18,6 +18,25 @@ class Exercise
   }
 }
 
+class ExerciseRef
+{
+  constructor(exerciseIdx, reps)
+  {
+    this.exerciseIdx = exerciseIdx;
+    this.reps = reps;
+  }
+}
+
+class ExerciseSet
+{
+  constructor(name, exercises = [], reps)
+  {
+    this.name = name;
+    this.exercises = exercises;
+    this.reps = reps;
+  }
+}
+
 // A timestep and a string
 class Cue
 {
@@ -32,18 +51,47 @@ class Cue
 
 class Schedule
 {
-  constructor(exerciseIdx, reps)
+  constructor(setIdx, reps)
   {
-    this.exerciseIdx = exerciseIdx;
+    this.setIdx = setIdx;
     this.reps = reps;
   }
 }
 
+function GetExerciseIdxFromName(exercises, name)
+{
+  for (let e = 0; e < exercises.length; ++e)
+  {
+    if (exercises[e].name == name)
+    {
+      return e;
+    }
+  }
+
+  console.error("No exercise found called ", name);
+  return -1;
+}
+
+function GetSetIdxFromName(sets, name)
+{
+  for (let e = 0; e < sets.length; ++e)
+  {
+    if (sets[e].name == name)
+    {
+      return e;
+    }
+  }
+
+  console.error("No set found called ", name);
+  return -1;
+}
+
 class Workout
 {
-  constructor(exercises = [], schedule = [])
+  constructor(exercises = [], sets = [], schedule = [])
   {
     this.exercises = exercises;
+    this.sets = sets;
     this.schedule = schedule;
   }
 
@@ -56,29 +104,33 @@ class Workout
       this.exercises.push(Object.assign(new Exercise(), e));
     }
 
+    // Parse sets
+    let sets = data.sets;
+    for (let s of sets)
+    {
+      let set = new ExerciseSet();
+
+      set.name = s.name;
+
+      // Parse exercises
+      for (let e of s.exercises)
+      {
+        set.exercises.push(new ExerciseRef(GetExerciseIdxFromName(this.exercises, e.exercise), e.reps));
+      }
+
+      set.reps = s.reps;
+
+      this.sets.push(set);
+    }
+
     // Parse schedule
     let schedule = data.schedule;
     for (let s of schedule)
     {
-      // Find exerciseIdx from name
-      let exerciseIdx = -1;
+      // Find setIdx from name
+      let setIdx = GetSetIdxFromName(this.sets, s.set);
 
-      for (let e = 0; e < this.exercises.length; ++e)
-      {
-        if (this.exercises[e].name == s.exercise)
-        {
-          exerciseIdx = e;
-          break;
-        }
-      }
-
-      if (exerciseIdx == -1)
-      {
-        console.error("Faield to parse workout file. ", s.exercise, " is not a vaild name.");
-        // TODO(JF): Throw an error here
-      }
-
-      let schedule = new Schedule(exerciseIdx, s.reps);
+      let schedule = new Schedule(setIdx, s.reps);
 
       this.schedule.push(schedule);
     }
@@ -118,26 +170,37 @@ window.onload = async function()
   // Parse workout into cues
   let totalTime = 0;
   // For every schedule in the workout
-  for (let s of workout.schedule)
+  for (let sch of workout.schedule)
   {
-    // Get the actual exercise
-    let exercise = workout.exercises[s.exerciseIdx];
+    // Get the set
+    let set = workout.sets[sch.setIdx];
 
-    // For each new exercise add a cue for the name of it
-    cues.push(new Cue(totalTime, `${exercise.name} times ${s.reps}`, consts.exerciseNameTime, true));
-    totalTime += consts.exerciseNameTime;
-
-    // For each rep in the schedule
-    for (let i = 0; i < s.reps; ++i)
+    // For every rep of the set
+    for (let i = 0; i < set.reps; ++i)
     {
-      // For each step of the exercise
-      for (let step of exercise.steps)
+      // For every exercise in the set
+      for (let s of set.exercises)
       {
-        // Add the cue
-        cues.push(new Cue(totalTime, step.name, step.duration));
+        // Get the actual exercise
+        let exercise = workout.exercises[s.exerciseIdx];
 
-        // Increase the time
-        totalTime += step.duration;
+        // For each new exercise add a cue for the name of it
+        cues.push(new Cue(totalTime, `${exercise.name} times ${s.reps}`, consts.exerciseNameTime, true));
+        totalTime += consts.exerciseNameTime;
+
+        // For each rep in the schedule
+        for (let i = 0; i < s.reps; ++i)
+        {
+          // For each step of the exercise
+          for (let step of exercise.steps)
+          {
+            // Add the cue
+            cues.push(new Cue(totalTime, step.name, step.duration));
+
+            // Increase the time
+            totalTime += step.duration;
+          }
+        }
       }
     }
   }
