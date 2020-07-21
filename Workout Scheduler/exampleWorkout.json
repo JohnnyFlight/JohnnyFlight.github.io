@@ -1,0 +1,391 @@
+{
+  "note": "An exercise is a single 'rep'",
+  "exercises":
+  [
+    {
+      "name": "Left Bicep Curl",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Right Bicep Curl",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Left Upward Arm Press",
+      "steps": [
+        {
+          "name": "down",
+          "duration": 2
+        },
+        {
+          "name": "up",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Right Upward Arm Press",
+      "steps": [
+        {
+          "name": "down",
+          "duration": 2
+        },
+        {
+          "name": "up",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Left Side Lift",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Right Side Lift",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Left Front Lift",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Right Front Lift",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Left Row",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Right Row",
+      "steps": [
+        {
+          "name": "up",
+          "duration": 2
+        },
+        {
+          "name": "down",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Left Side Bend",
+      "steps": [
+        {
+          "name": "down",
+          "duration": 2
+        },
+        {
+          "name": "up",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "Right Side Bend",
+      "steps": [
+        {
+          "name": "down",
+          "duration": 2
+        },
+        {
+          "name": "up",
+          "duration": 2
+        }
+      ]
+    },
+    {
+      "name": "30 Second Rest",
+      "steps": [
+        {
+          "name": "rest for 30 seconds",
+          "duration": 30
+        }
+      ]
+    }
+  ],
+  "note2": "A schedule contains a series of exercises and a number of repetitions",
+  "schedule":
+  [
+    {
+      "exercise": "Left Bicep Curl",
+      "reps": 10
+    },
+    {
+      "exercise": "Right Bicep Curl",
+      "reps": 10
+    },
+    {
+      "exercise": "30 Second Rest",
+      "reps": 1
+    },
+    {
+      "exercise": "Left Bicep Curl",
+      "reps": 10
+    },
+    {
+      "exercise": "Right Bicep Curl",
+      "reps": 10
+    },
+    {
+      "exercise": "30 Second Rest",
+      "reps": 1
+    },
+    {
+      "exercise": "Left Bicep Curl",
+      "reps": 10
+    },
+    {
+      "exercise": "Right Bicep Curl",
+      "reps": 10
+    },
+    {
+      "exercise": "30 Second Rest",
+      "reps": 1
+    },
+      {
+        "exercise": "Left Upward Arm Press",
+        "reps": 10
+      },
+      {
+        "exercise": "Right Upward Arm Press",
+        "reps": 10
+      },
+      {
+        "exercise": "30 Second Rest",
+        "reps": 1
+      },
+      {
+        "exercise": "Left Upward Arm Press",
+        "reps": 10
+      },
+      {
+        "exercise": "Right Upward Arm Press",
+        "reps": 10
+      },
+      {
+        "exercise": "30 Second Rest",
+        "reps": 1
+      },
+      {
+        "exercise": "Left Upward Arm Press",
+        "reps": 10
+      },
+      {
+        "exercise": "Right Upward Arm Press",
+        "reps": 10
+      },
+      {
+        "exercise": "30 Second Rest",
+        "reps": 1
+      },
+        {
+          "exercise": "Left Side Lift",
+          "reps": 10
+        },
+        {
+          "exercise": "Right Side Lift",
+          "reps": 10
+        },
+        {
+          "exercise": "30 Second Rest",
+          "reps": 1
+        },
+        {
+          "exercise": "Left Side Lift",
+          "reps": 10
+        },
+        {
+          "exercise": "Right Side Lift",
+          "reps": 10
+        },
+        {
+          "exercise": "30 Second Rest",
+          "reps": 1
+        },
+        {
+          "exercise": "Left Side Lift",
+          "reps": 10
+        },
+        {
+          "exercise": "Right Side Lift",
+          "reps": 10
+        },
+        {
+          "exercise": "30 Second Rest",
+          "reps": 1
+        },
+          {
+            "exercise": "Left Front Lift",
+            "reps": 10
+          },
+          {
+            "exercise": "Right Front Lift",
+            "reps": 10
+          },
+          {
+            "exercise": "30 Second Rest",
+            "reps": 1
+          },
+          {
+            "exercise": "Left Front Lift",
+            "reps": 10
+          },
+          {
+            "exercise": "Right Front Lift",
+            "reps": 10
+          },
+          {
+            "exercise": "30 Second Rest",
+            "reps": 1
+          },
+          {
+            "exercise": "Left Front Lift",
+            "reps": 10
+          },
+          {
+            "exercise": "Right Front Lift",
+            "reps": 10
+          },
+          {
+            "exercise": "30 Second Rest",
+            "reps": 1
+          },
+            {
+              "exercise": "Left Side Bend",
+              "reps": 10
+            },
+            {
+              "exercise": "Right Side Bend",
+              "reps": 10
+            },
+            {
+              "exercise": "30 Second Rest",
+              "reps": 1
+            },
+            {
+              "exercise": "Left Side Bend",
+              "reps": 10
+            },
+            {
+              "exercise": "Right Side Bend",
+              "reps": 10
+            },
+            {
+              "exercise": "30 Second Rest",
+              "reps": 1
+            },
+            {
+              "exercise": "Left Side Bend",
+              "reps": 10
+            },
+            {
+              "exercise": "Right Side Bend",
+              "reps": 10
+            },
+            {
+              "exercise": "30 Second Rest",
+              "reps": 1
+            },
+              {
+                "exercise": "Left Row",
+                "reps": 10
+              },
+              {
+                "exercise": "Right Row",
+                "reps": 10
+              },
+              {
+                "exercise": "30 Second Rest",
+                "reps": 1
+              },
+              {
+                "exercise": "Left Row",
+                "reps": 10
+              },
+              {
+                "exercise": "Right Row",
+                "reps": 10
+              },
+              {
+                "exercise": "30 Second Rest",
+                "reps": 1
+              },
+              {
+                "exercise": "Left Row",
+                "reps": 10
+              },
+              {
+                "exercise": "Right Row",
+                "reps": 10
+              },
+              {
+                "exercise": "30 Second Rest",
+                "reps": 1
+              }
+  ]
+}
