@@ -40,12 +40,13 @@ class ExerciseSet
 // A timestep and a string
 class Cue
 {
-  constructor(time, message, duration, isExercise = false)
+  constructor(time, message, duration, isExercise = false, itemIdx = -1)
   {
     this.time = time;
     this.message = message;
     this.duration = duration;
     this.isExercise = isExercise;
+    this.itemIdx = itemIdx;
   }
 }
 
@@ -145,7 +146,8 @@ const consts =
 let ui =
 {
   startButton: null,
-  currentExercise: null
+  currentExercise: null,
+  list: null
 };
 
 let cues = [];
@@ -159,6 +161,8 @@ window.onload = async function()
   workout.Parse(workoutData);
   console.log(workout);
 
+  ui.list = document.getElementById('list');
+
   ui.startButton = document.getElementById('start');
   ui.startButton.onclick = () =>
   {
@@ -169,6 +173,7 @@ window.onload = async function()
 
   // Parse workout into cues
   let totalTime = 0;
+  let itemCounter = 0;
   // For every schedule in the workout
   for (let sch of workout.schedule)
   {
@@ -184,8 +189,14 @@ window.onload = async function()
         // Get the actual exercise
         let exercise = workout.exercises[s.exerciseIdx];
 
+        // Add the workout to the list
+        let li = document.createElement('li');
+        li.innerText = exercise.name;
+        ui.list.appendChild(li);
+
         // For each new exercise add a cue for the name of it
-        cues.push(new Cue(totalTime, `${exercise.name} times ${s.reps}`, consts.exerciseNameTime, true));
+        cues.push(new Cue(totalTime, `${exercise.name} times ${s.reps}`, consts.exerciseNameTime, true, itemCounter));
+        itemCounter++;
         totalTime += consts.exerciseNameTime;
 
         // For each rep in the schedule
@@ -230,7 +241,17 @@ function step(timestamp)
       {
         if (cue.isExercise)
         {
+          // Show the current step
           ui.currentExercise.textContent = cue.message;
+
+          // Highlight the current step in the list
+          ui.list.children[cue.itemIdx].classList.add('current');
+
+          // Remove highlight from previous item
+          if (cue.itemIdx)
+          {
+            ui.list.children[cue.itemIdx - 1].classList.remove('current');
+          }
         }
 
         var msg = new SpeechSynthesisUtterance(cue.message);
