@@ -138,6 +138,109 @@ class Workout
   }
 }
 
+class WorkoutPlayback
+{
+  constructor()
+  {
+    this.cues = [];
+    this.elapsed = 0;
+    this.prevIdx = -1;
+    this.paused = true;
+  }
+
+  Parse(workout)
+  {
+    // Parse workout into cues
+    let totalTime = 0;
+    let itemCounter = 0;
+    // For every schedule in the workout
+    for (let sch of workout.schedule)
+    {
+      // Get the set
+      let set = workout.sets[sch.setIdx];
+
+      // For every rep of the set
+      for (let i = 0; i < set.reps; ++i)
+      {
+        // For every exercise in the set
+        for (let s of set.exercises)
+        {
+          // Get the actual exercise
+          let exercise = workout.exercises[s.exerciseIdx];
+
+          // Add the workout to the list
+          let li = document.createElement('li');
+          li.innerText = exercise.name;
+          ui.list.appendChild(li);
+
+          // For each new exercise add a cue for the name of it
+          this.cues.push(new Cue(totalTime, `${exercise.name} times ${s.reps}`, consts.exerciseNameTime, true, itemCounter));
+          itemCounter++;
+          totalTime += consts.exerciseNameTime;
+
+          // For each rep in the schedule
+          for (let i = 0; i < s.reps; ++i)
+          {
+            // For each step of the exercise
+            for (let step of exercise.steps)
+            {
+              // Add the cue
+              this.cues.push(new Cue(totalTime, step.name, step.duration));
+
+              // Increase the time
+              totalTime += step.duration;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  Update(timestep)
+  {
+    if (this.paused)
+    {
+      return;
+    }
+
+    this.elapsed += timestep;
+
+    // Iterate over the array to see which index the time falls into
+    // If it's different from the previous run, say the new message
+    for (let i = 0; i < this.cues.length; ++i)
+    {
+      let cue = this.cues[i];
+
+      if ((cue.time <= this.elapsed) && (cue.time + cue.duration > this.elapsed))
+      {
+        if (this.prevIdx != i)
+        {
+          if (cue.isExercise)
+          {
+            // Show the current step
+            ui.currentExercise.textContent = cue.message;
+
+            // Highlight the current step in the list
+            ui.list.children[cue.itemIdx].classList.add('current');
+
+            // Remove highlight from previous item
+            if (cue.itemIdx)
+            {
+              ui.list.children[cue.itemIdx - 1].classList.remove('current');
+            }
+          }
+
+          var msg = new SpeechSynthesisUtterance(cue.message);
+          msg.rate = 2.0;
+          window.speechSynthesis.speak(msg);
+        }
+
+        this.prevIdx = i;
+      }
+    }
+  }
+}
+
 const consts =
 {
   exerciseNameTime: 2,
@@ -147,10 +250,11 @@ let ui =
 {
   startButton: null,
   currentExercise: null,
-  list: null
+  list: null,
+  pauseButton: null
 };
 
-let cues = [];
+let playback;
 window.onload = async function()
 {
   // NOTE(JF): This might not work locally, will need to run a server
@@ -166,104 +270,46 @@ window.onload = async function()
   ui.startButton = document.getElementById('start');
   ui.startButton.onclick = () =>
   {
+    playback.paused = false;
     window.requestAnimationFrame(step);
+  };
+
+  ui.pauseButton = document.getElementById('pause');
+  ui.pauseButton.onclick = () =>
+  {
+    if (playback.paused)
+    {
+      playback.paused = false;
+      ui.pauseButton.innerText = "Pause Workout";
+    }
+    else
+    {
+      playback.paused = true;
+      ui.pauseButton.innerText = "Resume Workout";
+    }
   };
 
   ui.currentExercise = document.getElementById('current');
 
-  // Parse workout into cues
-  let totalTime = 0;
-  let itemCounter = 0;
-  // For every schedule in the workout
-  for (let sch of workout.schedule)
-  {
-    // Get the set
-    let set = workout.sets[sch.setIdx];
+  playback = new WorkoutPlayback();
+  playback.Parse(workout);
 
-    // For every rep of the set
-    for (let i = 0; i < set.reps; ++i)
-    {
-      // For every exercise in the set
-      for (let s of set.exercises)
-      {
-        // Get the actual exercise
-        let exercise = workout.exercises[s.exerciseIdx];
-
-        // Add the workout to the list
-        let li = document.createElement('li');
-        li.innerText = exercise.name;
-        ui.list.appendChild(li);
-
-        // For each new exercise add a cue for the name of it
-        cues.push(new Cue(totalTime, `${exercise.name} times ${s.reps}`, consts.exerciseNameTime, true, itemCounter));
-        itemCounter++;
-        totalTime += consts.exerciseNameTime;
-
-        // For each rep in the schedule
-        for (let i = 0; i < s.reps; ++i)
-        {
-          // For each step of the exercise
-          for (let step of exercise.steps)
-          {
-            // Add the cue
-            cues.push(new Cue(totalTime, step.name, step.duration));
-
-            // Increase the time
-            totalTime += step.duration;
-          }
-        }
-      }
-    }
-  }
-
-  console.log(cues);
+  console.log(playback);
 }
 
-let start;
+let prev;
 let prevIndex = -1;
 function step(timestamp)
 {
-  if (start === undefined)
+  if (prev === undefined)
   {
-    start = timestamp;
+    prev = timestamp;
   }
-  const elapsed = (timestamp - start) / 1000; // Seconds
+  const elapsed = (timestamp - prev) / 1000; // Seconds
 
-  // Iterate over the array to see which index the time falls into
-  // If it's different from the previous run, say the new message
-  for (let i = 0; i < cues.length; ++i)
-  {
-    let cue = cues[i];
+  prev = timestamp;
 
-    if ((cue.time <= elapsed) && (cue.time + cue.duration > elapsed))
-    {
-      if (prevIndex != i)
-      {
-        if (cue.isExercise)
-        {
-          // Show the current step
-          ui.currentExercise.textContent = cue.message;
-
-          // Highlight the current step in the list
-          ui.list.children[cue.itemIdx].classList.add('current');
-
-          // Remove highlight from previous item
-          if (cue.itemIdx)
-          {
-            ui.list.children[cue.itemIdx - 1].classList.remove('current');
-          }
-        }
-
-        var msg = new SpeechSynthesisUtterance(cue.message);
-        msg.rate = 2.0;
-        window.speechSynthesis.speak(msg);
-
-        console.log(elapsed);
-      }
-
-      prevIndex = i;
-    }
-  }
+  playback.Update(elapsed);
 
   window.requestAnimationFrame(step);
 }
