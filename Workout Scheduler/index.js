@@ -243,7 +243,7 @@ class WorkoutPlayback
 
 const consts =
 {
-  exerciseNameTime: 2,
+  exerciseNameTime: 5,
 };
 
 let ui =

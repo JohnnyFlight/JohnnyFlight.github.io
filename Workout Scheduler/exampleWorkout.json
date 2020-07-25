@@ -110,8 +110,20 @@
       "name": "30 Second Rest",
       "steps": [
         {
-          "name": "rest for 30 seconds",
-          "duration": 30
+          "name": "Start",
+          "duration": 10
+        },
+        {
+          "name": "20 Seconds Left",
+          "duration": 10
+        },
+        {
+          "name": "10 Seconds Left",
+          "duration": 5
+        },
+        {
+          "name": "5 Seconds Left",
+          "duration": 5
         }
       ]
     }
@@ -119,6 +131,28 @@
   "note2": "A set is a group of exercises commonly done together, eg. left and right exercises",
   "sets":
   [
+    {
+      "name": "Get Ready",
+      "exercises":
+      [
+        {
+          "exercise": "30 Second Rest",
+          "reps": 1
+        }
+      ],
+      "reps": 1
+    },
+    {
+      "name": "Rest",
+      "exercises":
+      [
+        {
+          "exercise": "30 Second Rest",
+          "reps": 1
+        }
+      ],
+      "reps": 1
+    },
     {
       "name": "Bicep Curls",
       "exercises":
@@ -145,10 +179,6 @@
         {
           "exercise": "Right Side Bend",
           "reps": 10
-        },
-        {
-          "exercise": "30 Second Rest",
-          "reps": 1
         }
       ],
       "reps": 3
@@ -209,10 +239,6 @@
         {
           "exercise": "Right Row",
           "reps": 10
-        },
-        {
-          "exercise": "30 Second Rest",
-          "reps": 1
         }
       ],
       "reps": 3
@@ -221,6 +247,10 @@
   "note3": "A schedule contains a series of exercises and a number of repetitions",
   "schedule":
   [
+    {
+      "set": "Get Ready",
+      "reps": 1
+    },
     {
       "set": "Bicep Curls",
       "reps": 3
@@ -240,6 +270,10 @@
     {
       "set": "Side Bends",
       "reps": 3
+    },
+    {
+      "set": "Rest",
+      "reps": 1
     },
     {
       "set": "Rows",
